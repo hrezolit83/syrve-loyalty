@@ -48,9 +48,13 @@ export const LOGIN_RATE_LIMIT = { limit: 10, windowSec: 60 };
  */
 export const OPERATION_LOCK_TIMEOUT_MS = 30000;
 
+/** Скільки сповіщень за раз виймає outbox. */
+export const OUTBOX_BATCH_SIZE = 500;
+
 /** Назви черг BullMQ: на ці рядки спираються і producer, і worker. */
 export const QUEUE_NAMES = {
   NOTIFY: 'notify',
+  POLL: 'poll',
 };
 
 /** Імена задач усередині черг. */
@@ -58,6 +62,12 @@ export const JOB_NAMES = {
   NOTIFY_TRANSACTION: 'notify-transaction',
   POLL_TRANSACTIONS: 'poll-transactions',
 };
+
+/**
+ * Id планувальника повторюваної задачі. Фіксований, тому кожен перезапуск
+ * воркера переписує те саме розписання, а не додає ще одне.
+ */
+export const POLL_SCHEDULER_ID = 'poll-transactions-scheduler';
 
 /** Спільні налаштування повторів: 3 спроби з зростаючою затримкою. */
 export const DEFAULT_JOB_OPTIONS = {

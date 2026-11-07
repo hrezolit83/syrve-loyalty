@@ -1,20 +1,32 @@
 // Точка входу ОКРЕМОГО процесу (контейнер worker у docker compose).
-// HTTP-порт не слухає. Його робота: Telegram-бот (long polling),
-// поллер транзакцій Syrve і черга сповіщень.
-//
-// Етап 3 — Telegram-бот; поллер і черга сповіщень додаються на етапі 5.
+// HTTP-порт не слухає. Його робота:
+//   - Telegram-бот (long polling) — етап 3;
+//   - поллер транзакцій Syrve і черга сповіщень — етап 5.
 import { bot, isBotEnabled, startBot } from '../bot/bot.js';
-import { initPrismaConnection, closePrismaConnection } from '../db/prisma.js';
+import { closePrismaConnection, initPrismaConnection } from '../db/prisma.js';
+import { schedulePolling } from '../queues/pollQueue.js';
 import { logger } from '../utils/logger.js';
+import { createNotifyWorker } from './notifyWorker.js';
+import { createPollWorker } from './pollWorker.js';
 
 const workers = [];
 
 const bootstrap = async () => {
   try {
-    // Prisma потрібна воркеру: бот читає й пише гостей.
+    // Prisma потрібна воркеру: бот читає й пише гостей, поллер — транзакції.
     await initPrismaConnection();
 
     await startBot();
+
+    workers.push(createPollWorker());
+    logger.info('Воркер поллера слухає чергу "poll"');
+
+    workers.push(createNotifyWorker());
+    logger.info('Воркер сповіщень слухає чергу "notify"');
+
+    // Розписання ставимо після воркерів: інакше перша задача могла б
+    // з'явитися раніше, ніж буде кому її взяти.
+    await schedulePolling();
 
     logger.info('Воркер запущено');
   } catch (error) {
