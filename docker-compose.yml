@@ -1,8 +1,13 @@
-# Етап 1: інфраструктура для локальної розробки — база й Redis.
-# Контейнери api, worker і admin додаються на етапі 6, разом із повним
-# запуском "однією командою".
+# Весь сервіс однією командою:
 #
-# Запуск: docker compose up -d
+#   docker compose up --build
+#
+# Піднімається п'ять контейнерів: база, Redis, API, воркер (бот + поллер)
+# і панель адміністратора за nginx. Міграції й сід адміністратора
+# виконуються автоматично перед старом API.
+#
+# Панель:  http://localhost:${ADMIN_PORT:-8080}
+# API:     http://localhost:${PORT:-3000}/api/health
 services:
   postgres:
     image: postgres:16-alpine
@@ -17,8 +22,10 @@ services:
       - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       # Named volume: дані живуть окремо від контейнера й не зникають після down.
+      # Повне очищення: docker compose down -v
       - pgdata:/var/lib/postgresql/data
     healthcheck:
+      # Поки pg_isready не скаже «готовий», API і воркер не стартують.
       test:
         [
           'CMD-SHELL',
@@ -41,6 +48,80 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  api:
+    build: ./api
+    container_name: syrve-loyalty-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Усередині мережі Docker сервіси звертаються один до одного за іменем
+      # сервісу, а не за localhost — тому ці три змінні перекривають .env.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-syrve_loyalty}?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # У контейнері слухаємо 3000, а назовні віддаємо ${PORT} — інакше
+      # локальний PORT=3001 з .env не збігся б із портом контейнера.
+      PORT: 3000
+      # Панель ходить через nginx того ж origin, але залишаємо явно:
+      # так само працює й запуск панелі окремо.
+      ADMIN_ORIGIN: http://localhost:${ADMIN_PORT:-8080}
+    ports:
+      - '${PORT:-3000}:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # migrate deploy накатує готові міграції з prisma/migrations (без запитань),
+    # seed створює адміністратора з ADMIN_LOGIN/ADMIN_PASSWORD (upsert, тому
+    # повторний запуск безпечний), і лише після цього піднімається сервер.
+    command: sh -c "npx prisma migrate deploy && npm run seed && npm start"
+    healthcheck:
+      # Без curl у node:22-slim — перевіряємо власним рантаймом.
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  worker:
+    build: ./api
+    container_name: syrve-loyalty-worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-syrve_loyalty}?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      # Чекає, поки API накатить міграції й стане здоровим: інакше воркер
+      # звертався б до таблиць, яких ще немає.
+      api:
+        condition: service_healthy
+    command: npm run start:worker
+
+  admin:
+    build: ./admin
+    container_name: syrve-loyalty-admin
+    restart: unless-stopped
+    ports:
+      - '${ADMIN_PORT:-8080}:80'
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   pgdata:
