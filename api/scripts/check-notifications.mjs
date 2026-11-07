@@ -112,36 +112,91 @@ const notifyWorker2 = createNotifyWorker();
 await runPoll();
 ok('після рестарту воркерів дублів немає', sent.length === 1, `надіслано ${sent.length}`);
 
-// --- 4. зміна «в кабінеті Syrve»: запис прямо в mock_transactions ---
-const last = await prisma.mockTransaction.findFirst({
-  where: { customerId: guest.syrveCustomerId },
-  orderBy: { revision: 'desc' },
+/**
+ * Пише транзакцію прямо в mock_transactions — так імітується зміна, зроблена
+ * НЕ через наш сервіс (кабінет Syrve Loyalty, каса).
+ */
+const insertSyrveSideTransaction = async ({ type, typeName, sum, comment, balanceAfter }) => {
+  const last = await prisma.mockTransaction.findFirst({
+    where: { customerId: guest.syrveCustomerId },
+    orderBy: { revision: 'desc' },
+  });
+
+  const next =
+    balanceAfter === null ? null : Number(last.balanceAfter) + Number(sum);
+
+  await prisma.$transaction([
+    prisma.mockTransaction.create({
+      data: {
+        customerId: guest.syrveCustomerId,
+        revision: (last?.revision ?? 0n) + 1n,
+        type,
+        typeName,
+        sum,
+        balanceAfter: next,
+        comment,
+      },
+    }),
+    ...(next === null
+      ? []
+      : [
+          prisma.mockCustomer.update({
+            where: { id: guest.syrveCustomerId },
+            data: { balance: next },
+          }),
+        ]),
+  ]);
+};
+
+// --- 4. зміна з кабінету Syrve Loyalty: тип 7 RefillWallet ---
+// Саме цей тип приходить на «Змінення балансу» в кабінеті — перевірено
+// вручну на живій організації.
+await insertSyrveSideTransaction({
+  type: '7',
+  typeName: 'RefillWallet',
+  sum: 12.5,
+  comment: 'Зміна балансу з кабінету',
 });
-await prisma.$transaction([
-  prisma.mockTransaction.create({
-    data: {
-      customerId: guest.syrveCustomerId,
-      revision: (last?.revision ?? 0n) + 1n,
-      // Невідомий нам тип: так перевіряється запасне правило класифікації
-      // за знаком суми (реальних кодів для нарахувань на касі ми ще не бачили).
-      type: '77',
-      typeName: 'RefillByOrderUnknown',
-      sum: 12.5,
-      balanceAfter: Number(last.balanceAfter) + 12.5,
-      comment: 'Кешбек 5% на касі',
-    },
-  }),
-  prisma.mockCustomer.update({
-    where: { id: guest.syrveCustomerId },
-    data: { balance: Number(last.balanceAfter) + 12.5 },
-  }),
-]);
 
 await runPoll();
-ok('зміна в Syrve напряму дає 1 нове повідомлення', sent.length === 2, `надіслано ${sent.length}`);
-console.log('     текст:', JSON.stringify(sent[1]?.text));
+ok('зміна з кабінету Syrve (тип 7) дає 1 нове повідомлення', sent.length === 2, `надіслано ${sent.length}`);
+ok('   напрямок правильний (нараховано)', sent[1]?.text.includes('Нараховано'), JSON.stringify(sent[1]?.text));
 
-// --- 5. списання → текст про списання ---
+// --- 4б. НЕВІДОМИЙ код типу з ВІД'ЄМНОЮ сумою ---
+// Головна перевірка правила «напрямок за знаком суми»: назва типу натякає
+// на нарахування, код нам невідомий, але сума від'ємна — гість має побачити
+// «Списано», а не «Нараховано».
+await insertSyrveSideTransaction({
+  type: '99',
+  typeName: 'RefillSomethingUnknown',
+  sum: -7,
+  comment: 'Невідомий тип, мінусова сума',
+});
+
+await runPoll();
+ok('невідомий тип із sum != 0 дає сповіщення', sent.length === 3, `надіслано ${sent.length}`);
+ok('   напрямок за знаком суми, а не за назвою типу', sent[2]?.text.includes('Списано'), JSON.stringify(sent[2]?.text));
+
+// --- 4в. нейтральна транзакція: sum = 0, balanceAfter = null ---
+// Так приходить SetGuestCategory. Сповіщення не має бути, але курсор
+// мусить зсунутися, інакше поллер читав би її вічно.
+const beforeNeutral = await prisma.guest.findUnique({ where: { id: guest.id } });
+
+await insertSyrveSideTransaction({
+  type: '21',
+  typeName: 'SetGuestCategory',
+  sum: 0,
+  balanceAfter: null,
+  comment: 'Кэшбек 1%',
+});
+
+await runPoll();
+const afterNeutral = await prisma.guest.findUnique({ where: { id: guest.id } });
+ok('SetGuestCategory не породжує сповіщення', sent.length === 3, `надіслано ${sent.length}`);
+ok('   але курсор зсунуто', afterNeutral.lastRevision > beforeNeutral.lastRevision,
+  `${beforeNeutral.lastRevision} → ${afterNeutral.lastRevision}`);
+
+// --- 5. списання через сервіс → текст про списання ---
 await client.chargeOffWallet({
   customerId: guest.syrveCustomerId,
   walletId: program.walletId,
@@ -149,7 +204,8 @@ await client.chargeOffWallet({
   comment: 'Оплата кави',
 });
 await runPoll();
-ok('списання дає повідомлення про списання', sent.length === 3 && sent[2].text.includes('Списано'), JSON.stringify(sent[2]?.text));
+ok('списання через сервіс дає повідомлення про списання',
+  sent.length === 4 && sent[3].text.includes('Списано'), JSON.stringify(sent[3]?.text));
 
 // --- 6. гість заблокував бота: 403 → позначка, без ретраїв ---
 failNextWith = Object.assign(new Error('Forbidden: bot was blocked by the user'), {
@@ -166,7 +222,7 @@ await runPoll();
 
 const blocked = await prisma.guest.findUnique({ where: { id: guest.id } });
 ok('403 позначає гостя як заблокованого', blocked.botBlockedAt !== null);
-ok('403 не породжує повторних відправок', sent.length === 3, `надіслано ${sent.length}`);
+ok('403 не породжує повторних відправок', sent.length === 4, `надіслано ${sent.length}`);
 
 const failedJobs = await notifyQueue.getFailed();
 const relevant = failedJobs.filter((job) => job.attemptsMade === 1);
@@ -188,7 +244,7 @@ for (const r of rows) {
 const guestAfter = await prisma.guest.findUnique({ where: { id: guest.id } });
 console.log('guest.lastRevision =', guestAfter.lastRevision.toString());
 ok('курсор дорівнює останній ревізії', guestAfter.lastRevision === rows[rows.length - 1].revision);
-ok('усі доставлені транзакції мають notifiedAt', rows.filter((r) => r.notifiedAt).length === 3);
+ok('усі доставлені транзакції мають notifiedAt', rows.filter((r) => r.notifiedAt).length === 4);
 
 // --- прибирання ---
 // Порядок важливий: спершу воркери (вони тримають блокуючі підключення до

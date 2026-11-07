@@ -171,8 +171,11 @@ model MockTransaction {
   revision     BigInt
   type         String   @db.VarChar(64)
   typeName     String   @map("type_name") @db.VarChar(64)
-  sum          Decimal  @db.Decimal(10, 2)
-  balanceAfter Decimal  @map("balance_after") @db.Decimal(10, 2)
+  sum          Decimal  @db.Decimal(14, 2)
+  // Nullable, бо так поводиться живий Syrve: у транзакціях, що не змінюють
+  // баланс (SetGuestCategory), balanceAfter приходить null. Без цього мок
+  // не міг би зобразити таку транзакцію взагалі.
+  balanceAfter Decimal? @map("balance_after") @db.Decimal(14, 2)
   comment      String?  @db.VarChar(255)
   whenCreated  DateTime @default(now()) @map("when_created")
 

@@ -232,7 +232,8 @@ export class MockSyrveClient extends SyrveClient {
       type: row.type,
       typeName: row.typeName,
       sum: toNumber(row.sum),
-      balanceAfter: toNumber(row.balanceAfter),
+      // null не підмінюємо нулем — як і справжній клієнт.
+      balanceAfter: row.balanceAfter === null ? null : toNumber(row.balanceAfter),
       comment: row.comment,
       whenCreated: row.whenCreated.toISOString(),
       // Як у Syrve: транзакція належить гаманцю конкретної програми.

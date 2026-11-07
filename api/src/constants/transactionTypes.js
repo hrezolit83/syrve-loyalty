@@ -1,20 +1,27 @@
 /**
  * Типи транзакцій Syrve — в одному місці.
  *
- * Значення перевірені на живому API (див. docs/api-samples/
- * 11-customer-transactions-by_revision.json): Syrve віддає ЧИСЛОВИЙ код
- * у полі `type` і назву в `typeName`.
+ * Значення перевірені на живому API (`docs/api-samples/11-...json`) і ручною
+ * перевіркою через кабінет Syrve Loyalty. Syrve віддає ЧИСЛОВИЙ код у полі
+ * `type` і назву в `typeName`:
  *
- *   21 SetGuestCategory      — зміна категорії гостя, баланс не змінює
- *                              (sum = 0, balanceAfter = null)
- *   35 RefillWalletFromApi   — нарахування через API
- *   40 WithdrawWalletFromApi — списання через API
+ *   | код | typeName               | звідки приходить                       |
+ *   |-----|------------------------|----------------------------------------|
+ *   |   7 | RefillWallet           | зміна балансу з кабінету Syrve Loyalty |
+ *   |  21 | SetGuestCategory       | зміна категорії гостя, баланс не чіпає |
+ *   |  35 | RefillWalletFromApi    | нарахування через API (наша панель)    |
+ *   |  40 | WithdrawWalletFromApi  | списання через API (наша панель)       |
  *
- * Типів у Syrve більше (нарахування за чеком на касі, сертифікати,
- * скасування), їх коди ми ще не бачили. Тому порядок визначення такий:
- * назва → код → знак суми. Запасне правило за знаком гарантує, що
- * невідомий тип не зламає сповіщення: у Syrve нарахування додатне,
- * списання від'ємне.
+ * ГОЛОВНЕ ПРАВИЛО: напрямок операції визначає ЗНАК СУМИ, а не тип.
+ * У Syrve нарахування додатне, списання від'ємне — це видно в усіх
+ * перевірених типах. Таблиця нижче відповідає лише на інше питання:
+ * чи ця транзакція взагалі змінює баланс.
+ *
+ * Чому саме так: типів у Syrve більше, ніж ми бачили (сертифікати,
+ * нарахування за чеком на касі, скасування, коригування), і кожен новий код
+ * інакше вимагав би правки коду. За знаком суми невідомий тип одразу
+ * обробляється правильно — гість отримає «Нараховано» чи «Списано» залежно
+ * від того, що насправді сталося з його балансом.
  */
 
 export const TRANSACTION_KINDS = {
@@ -24,18 +31,18 @@ export const TRANSACTION_KINDS = {
   NEUTRAL: 'neutral',
 };
 
-/** Назва типу → категорія. Доповнювати тут, коли побачимо нові типи. */
-export const TYPE_NAME_KINDS = {
-  RefillWalletFromApi: TRANSACTION_KINDS.TOPUP,
-  WithdrawWalletFromApi: TRANSACTION_KINDS.CHARGEOFF,
-  SetGuestCategory: TRANSACTION_KINDS.NEUTRAL,
-};
+/**
+ * Типи, які НЕ змінюють баланс. Тільки вони виключають сповіщення —
+ * решта (включно з невідомими) вирішується за сумою.
+ */
+export const NEUTRAL_TYPE_NAMES = new Set(['SetGuestCategory']);
+export const NEUTRAL_TYPE_CODES = new Set([21]);
 
-/** Числовий код → категорія. */
-export const TYPE_CODE_KINDS = {
-  21: TRANSACTION_KINDS.NEUTRAL,
-  35: TRANSACTION_KINDS.TOPUP,
-  40: TRANSACTION_KINDS.CHARGEOFF,
+/** Відомі типи зміни балансу — для читабельності журналу, не для напрямку. */
+export const BALANCE_TYPE_NAMES = {
+  RefillWallet: 'зміна балансу з кабінету Syrve Loyalty',
+  RefillWalletFromApi: 'нарахування через API',
+  WithdrawWalletFromApi: 'списання через API',
 };
 
 /**
@@ -43,18 +50,24 @@ export const TYPE_CODE_KINDS = {
  * @returns {'topup'|'chargeoff'|'neutral'}
  */
 export const classifyTransaction = ({ type, typeName, sum }) => {
-  if (typeName && TYPE_NAME_KINDS[typeName]) return TYPE_NAME_KINDS[typeName];
+  if (typeName && NEUTRAL_TYPE_NAMES.has(typeName)) {
+    return TRANSACTION_KINDS.NEUTRAL;
+  }
 
   const code = Number(type);
 
-  if (Number.isFinite(code) && TYPE_CODE_KINDS[code]) {
-    return TYPE_CODE_KINDS[code];
+  if (Number.isFinite(code) && NEUTRAL_TYPE_CODES.has(code)) {
+    return TRANSACTION_KINDS.NEUTRAL;
   }
 
   const amount = Number(sum);
 
-  if (!amount) return TRANSACTION_KINDS.NEUTRAL;
+  // Нуль або не число — балансу не стосується, писати гостю нема про що.
+  if (!Number.isFinite(amount) || amount === 0) {
+    return TRANSACTION_KINDS.NEUTRAL;
+  }
 
+  // Напрямок — виключно за знаком суми.
   return amount > 0 ? TRANSACTION_KINDS.TOPUP : TRANSACTION_KINDS.CHARGEOFF;
 };
 
