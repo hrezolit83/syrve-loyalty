@@ -61,8 +61,92 @@ h2 {
 .topbar-inner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 1rem;
   height: 56px;
+}
+
+/* ---------- навігація ---------- */
+
+.nav {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: auto;
+  margin-right: 1.5rem;
+}
+
+.nav a {
+  padding: 0.35rem 0.7rem;
+  border-radius: 7px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.92rem;
+}
+
+.nav a:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.nav a.active {
+  background: var(--bg);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.back-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+/* ---------- сортування й пагінація ---------- */
+
+button.th-sort {
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+button.th-sort:hover {
+  color: var(--accent);
+}
+
+button.secondary {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+button.secondary:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+td a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+td a:hover {
+  text-decoration: underline;
 }
 
 .topbar-right {

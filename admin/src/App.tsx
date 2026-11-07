@@ -1,5 +1,6 @@
 import {
   Navigate,
+  NavLink,
   Route,
   BrowserRouter as Router,
   Routes,
@@ -7,9 +8,11 @@ import {
 import type { ReactNode } from 'react';
 
 import { AuthProvider } from './auth';
-import { useAuth } from './useAuth';
+import { GuestPage } from './pages/GuestPage';
+import { GuestsPage } from './pages/GuestsPage';
 import { LoginPage } from './pages/LoginPage';
 import { SearchPage } from './pages/SearchPage';
+import { useAuth } from './useAuth';
 
 /**
  * Без входу всі сторінки ведуть на /login.
@@ -36,6 +39,14 @@ const Layout = ({ children }: { children: ReactNode }) => {
       <header className="topbar">
         <div className="topbar-inner">
           <strong>Сервіс лояльності</strong>
+
+          <nav className="nav">
+            <NavLink to="/" end>
+              Пошук
+            </NavLink>
+            <NavLink to="/guests">Гості</NavLink>
+          </nav>
+
           <div className="topbar-right">
             <span className="muted">{admin?.login}</span>
             <button type="button" className="link" onClick={() => logout()}>
@@ -50,21 +61,46 @@ const Layout = ({ children }: { children: ReactNode }) => {
   );
 };
 
+/** Сторінки під автентифікацією мають однакову обгортку. */
+const Protected = ({ children }: { children: ReactNode }) => (
+  <RequireAuth>
+    <Layout>{children}</Layout>
+  </RequireAuth>
+);
+
 export const App = () => (
   <AuthProvider>
     <Router>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+
         <Route
           path="/"
           element={
-            <RequireAuth>
-              <Layout>
-                <SearchPage />
-              </Layout>
-            </RequireAuth>
+            <Protected>
+              <SearchPage />
+            </Protected>
           }
         />
+
+        <Route
+          path="/guests"
+          element={
+            <Protected>
+              <GuestsPage />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/guests/:customerId"
+          element={
+            <Protected>
+              <GuestPage />
+            </Protected>
+          }
+        />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

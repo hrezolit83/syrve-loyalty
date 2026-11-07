@@ -72,6 +72,26 @@ const request = async <T>(
 
 export type Admin = { id: string; login: string };
 
+/** Рядок списку гостей (Д2) — із нашої БД, без балансу. */
+export type GuestListItem = {
+  id: string;
+  customerId: string | null;
+  name: string | null;
+  phone: string;
+  phoneFormatted: string;
+  cardNumber: string | null;
+  botBlocked: boolean;
+  createdAt: string;
+};
+
+export type GuestList = {
+  guests: GuestListItem[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
 export type Guest = {
   customerId: string;
   name: string | null;
@@ -81,6 +101,7 @@ export type Guest = {
   balance: number;
   registeredViaBot: boolean;
   registeredAt: string | null;
+  botBlocked: boolean;
 };
 
 export type Operation = {
@@ -124,6 +145,25 @@ export const api = {
   logout: () => request<null>('/auth/logout', { method: 'POST' }),
 
   me: () => request<{ admin: Admin }>('/auth/me'),
+
+  guests: (params: {
+    search?: string;
+    sort?: 'createdAt' | 'name';
+    order?: 'asc' | 'desc';
+    page?: number;
+    pageSize?: number;
+  }) => {
+    const query = new URLSearchParams();
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') query.set(key, String(value));
+    });
+
+    return request<GuestList>(`/admin/guests?${query.toString()}`);
+  },
+
+  guest: (customerId: string) =>
+    request<Guest>(`/admin/guests/${customerId}`),
 
   searchGuest: (phone: string) =>
     request<Guest>(`/admin/guests/search?phone=${encodeURIComponent(phone)}`),

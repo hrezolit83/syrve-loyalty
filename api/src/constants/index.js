@@ -35,6 +35,9 @@ export const HISTORY_LIMIT = 10;
 /** Скільки операцій Syrve показує панель на картці гостя (Д1). */
 export const ADMIN_HISTORY_LIMIT = 20;
 
+/** Скільки гостей на сторінці списку в панелі (Д2). */
+export const GUESTS_PAGE_SIZE = 20;
+
 /** Межі імені гостя. */
 export const GUEST_NAME_MIN = 2;
 export const GUEST_NAME_MAX = 50;
