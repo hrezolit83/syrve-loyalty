@@ -75,9 +75,15 @@ model Guest {
 /// Журнал ручних нарахувань і списань (О5): хто, коли, скільком, чому.
 /// Пишемо і невдалі спроби — інакше не видно, що адміністратор узагалі робив.
 model Operation {
-  id        String          @id @default(uuid()) @db.Uuid
-  adminId   String          @map("admin_id") @db.Uuid
-  guestId   String          @map("guest_id") @db.Uuid
+  id      String @id @default(uuid()) @db.Uuid
+  adminId String @map("admin_id") @db.Uuid
+
+  // Гість у Syrve — головний ключ операції: адміністратор може працювати
+  // і з гостем, який ніколи не відкривав нашого бота.
+  syrveCustomerId String  @map("syrve_customer_id") @db.Uuid
+  // Заповнено, лише якщо гість зареєстрований через бот.
+  guestId         String? @map("guest_id") @db.Uuid
+
   type      OperationType
   amount    Decimal         @db.Decimal(10, 2)
   reason    String          @db.VarChar(255)
@@ -87,9 +93,10 @@ model Operation {
 
   // Restrict: журнал операцій не можна втратити разом із гостем
   // або адміністратором — це аудит.
-  admin Admin @relation(fields: [adminId], references: [id], onDelete: Restrict)
-  guest Guest @relation(fields: [guestId], references: [id], onDelete: Restrict)
+  admin Admin  @relation(fields: [adminId], references: [id], onDelete: Restrict)
+  guest Guest? @relation(fields: [guestId], references: [id], onDelete: Restrict)
 
+  @@index([syrveCustomerId, createdAt])
   @@index([guestId, createdAt])
   @@index([adminId, createdAt])
   @@map("operations")

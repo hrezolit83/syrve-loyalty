@@ -1,4 +1,5 @@
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import pinoHttp from 'pino-http';
 
@@ -13,7 +14,19 @@ const PORT = Number(getEnvVar('PORT', '3000'));
 export const setupServer = async () => {
   const app = express();
 
-  app.use(cors());
+  // credentials: true - панель надсилає httpOnly cookie з JWT.
+  // Конкретний origin, а не зірочка: при ній браузер cookie не віддає.
+  app.use(
+    cors({
+      origin: getEnvVar('ADMIN_ORIGIN', 'http://localhost:5173'),
+      credentials: true,
+    }),
+  );
+  app.use(cookieParser());
+
+  // За проксі (docker, nginx) req.ip без цього показує адресу проксі,
+  // і лімітер входу вважав би всі спроби однією.
+  app.set('trust proxy', 1);
   app.use(express.json());
   app.use(pinoHttp({ logger }));
 

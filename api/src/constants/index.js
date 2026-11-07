@@ -33,6 +33,21 @@ export const BOT_STATE_TTL_SEC = 60 * 60;
 export const GUEST_NAME_MIN = 2;
 export const GUEST_NAME_MAX = 50;
 
+/** Cookie з JWT адміністратора. httpOnly, тому JS на сторінці його не бачить. */
+export const AUTH_COOKIE = 'syrve_loyalty_token';
+
+/** Скільки живе JWT адміністратора (секунди). */
+export const JWT_TTL_SEC = 12 * 60 * 60;
+
+/** Ліміт спроб входу: 10 за хвилину з однієї адреси. */
+export const LOGIN_RATE_LIMIT = { limit: 10, windowSec: 60 };
+
+/**
+ * Скільки тримаємо транзакцію з локом гостя. Усередині - запити до Syrve,
+ * тому дефолтних 5 с Prisma мало.
+ */
+export const OPERATION_LOCK_TIMEOUT_MS = 30000;
+
 /** Назви черг BullMQ: на ці рядки спираються і producer, і worker. */
 export const QUEUE_NAMES = {
   NOTIFY: 'notify',
