@@ -278,6 +278,14 @@ tr:last-child td {
   text-align: right;
 }
 
+.amount-plus {
+  color: var(--ok-text);
+}
+
+.amount-minus {
+  color: var(--fail-text);
+}
+
 .nowrap {
   white-space: nowrap;
 }

@@ -3,6 +3,7 @@ import { Router } from 'express';
 import {
   chargeOffController,
   getOperationsController,
+  getSyrveOperationsController,
   searchGuestController,
   topUpController,
 } from '../controllers/guests.js';
@@ -18,9 +19,16 @@ router.use(ctrlWrapper(authenticate));
 
 router.get('/guests/search', ctrlWrapper(searchGuestController));
 
+// Наш журнал ручних операцій (хто з адміністраторів що зробив).
 router.get(
   '/guests/:customerId/operations',
   ctrlWrapper(getOperationsController),
+);
+
+// Д1: усі зміни балансу в Syrve, включно з кабінетом і касою.
+router.get(
+  '/guests/:customerId/syrve-operations',
+  ctrlWrapper(getSyrveOperationsController),
 );
 
 router.post(

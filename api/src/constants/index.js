@@ -29,6 +29,12 @@ export const TRANSACTIONS_PAGE_SIZE = 100;
 /** Скільки живе незавершений діалог реєстрації в Redis. */
 export const BOT_STATE_TTL_SEC = 60 * 60;
 
+/** Скільки операцій показує бот у кнопці «Історія» (Д1). */
+export const HISTORY_LIMIT = 10;
+
+/** Скільки операцій Syrve показує панель на картці гостя (Д1). */
+export const ADMIN_HISTORY_LIMIT = 20;
+
 /** Межі імені гостя. */
 export const GUEST_NAME_MIN = 2;
 export const GUEST_NAME_MAX = 50;

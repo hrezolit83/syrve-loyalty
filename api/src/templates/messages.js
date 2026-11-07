@@ -48,6 +48,18 @@ export const formatAmount = (amount) => {
     : DECIMAL_FORMAT.format(value);
 };
 
+/** Операції: 1 операція, 2 операції, 5 операцій. */
+export const pluralizeOperation = (count) => {
+  const int = Math.abs(Math.trunc(Number(count)));
+  const lastTwo = int % 100;
+  const last = int % 10;
+
+  if (lastTwo >= 11 && lastTwo <= 14) return 'операцій';
+  if (last === 1) return 'операція';
+  if (last >= 2 && last <= 4) return 'операції';
+  return 'операцій';
+};
+
 export const formatBonuses = (amount) =>
   `${formatAmount(amount)} ${pluralizeBonus(amount)}`;
 
@@ -121,6 +133,35 @@ export const MESSAGES = {
 
   // balanceAfter може бути null: Syrve не завжди його віддає (перевірено
   // на живому API). Краще не написати про баланс, ніж написати неправильний.
+  historyEmpty:
+    'Операцій за вашою карткою ще не було. Щойно нарахуємо бонуси — одразу напишемо.',
+
+  historyHeader: (count) =>
+    `📜 Останні ${count} ${pluralizeOperation(count)}:`,
+
+  historyItem: ({ whenCreated, sum, balanceAfter, comment }) => {
+    const date = whenCreated
+      ? new Date(whenCreated).toLocaleString('uk-UA', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : '';
+
+    const amount = `${Number(sum) < 0 ? '−' : '+'}${formatAmount(Math.abs(Number(sum)))}`;
+    const balance =
+      balanceAfter === null || balanceAfter === undefined
+        ? ''
+        : ` → ${formatAmount(balanceAfter)}`;
+
+    return [
+      `${date}  ${amount}${balance}`,
+      ...(comment ? [`   ${comment}`] : []),
+    ].join('\n');
+  },
+
   notifyTopUp: ({ sum, balanceAfter, comment }) =>
     [
       `✅ Нараховано ${formatBonuses(sum)}.`,

@@ -1,6 +1,7 @@
 import { Bot, InputFile } from 'grammy';
 
 import { GUEST_NAME_MAX, GUEST_NAME_MIN } from '../constants/index.js';
+import { getGuestSyrveHistory } from '../services/history.js';
 import {
   findGuestByTelegramId,
   getGuestCard,
@@ -12,6 +13,7 @@ import { getEnvVar } from '../utils/getEnvVar.js';
 import { logger } from '../utils/logger.js';
 import { normalizePhone } from '../utils/phone.js';
 import { renderCardQr } from '../utils/qr.js';
+import { HISTORY_LIMIT } from '../constants/index.js';
 import { BUTTONS, contactKeyboard, menuKeyboard } from './keyboards.js';
 import { clearState, getState, setState, STEPS } from './state.js';
 
@@ -150,7 +152,11 @@ export const registerBotHandlers = () => {
     const text = ctx.message.text.trim();
     const telegramId = ctx.from.id;
 
-    if (text === BUTTONS.MY_CARD || text === BUTTONS.REFRESH_BALANCE) {
+    if (
+      text === BUTTONS.MY_CARD ||
+      text === BUTTONS.REFRESH_BALANCE ||
+      text === BUTTONS.HISTORY
+    ) {
       const guest = await findGuestByTelegramId(telegramId);
 
       if (!guest?.syrveCustomerId) {
@@ -161,6 +167,32 @@ export const registerBotHandlers = () => {
       try {
         if (text === BUTTONS.MY_CARD) {
           await sendCard(ctx, guest);
+          return;
+        }
+
+        if (text === BUTTONS.HISTORY) {
+          // Д1: історію читаємо з Syrve — там усі зміни балансу, зокрема
+          // нарахування на касі й правки з кабінету.
+          const history = await getGuestSyrveHistory(
+            guest.syrveCustomerId,
+            HISTORY_LIMIT,
+          );
+
+          if (history.length === 0) {
+            await ctx.reply(MESSAGES.historyEmpty, {
+              reply_markup: menuKeyboard,
+            });
+            return;
+          }
+
+          await ctx.reply(
+            [
+              MESSAGES.historyHeader(history.length),
+              '',
+              ...history.map((item) => MESSAGES.historyItem(item)),
+            ].join('\n'),
+            { reply_markup: menuKeyboard },
+          );
           return;
         }
 

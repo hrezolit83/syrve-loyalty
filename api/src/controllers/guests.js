@@ -1,10 +1,13 @@
 import createHttpError from 'http-errors';
 
+import { ADMIN_HISTORY_LIMIT } from '../constants/index.js';
+
 import { prisma } from '../db/prisma.js';
 import {
   applyOperation,
   getOperationsByCustomerId,
 } from '../services/operations.js';
+import { getGuestSyrveHistory } from '../services/history.js';
 import { getSyrveClient } from '../services/syrve/index.js';
 import { formatAmount } from '../templates/messages.js';
 import { logger } from '../utils/logger.js';
@@ -88,6 +91,21 @@ const operationController = (type) => async (req, res) => {
 
 export const topUpController = operationController('topup');
 export const chargeOffController = operationController('chargeoff');
+
+/**
+ * Д1: усі зміни балансу гостя з Syrve — зокрема ті, що зробили в кабінеті
+ * Syrve Loyalty або на касі. Це НЕ наш журнал ручних операцій: той показує,
+ * хто з адміністраторів що зробив через панель, і містить також невдалі
+ * спроби. Тому в панелі два окремі блоки.
+ */
+export const getSyrveOperationsController = async (req, res) => {
+  const operations = await getGuestSyrveHistory(
+    req.params.customerId,
+    ADMIN_HISTORY_LIMIT,
+  );
+
+  res.json({ status: 200, message: 'ok', data: { operations } });
+};
 
 export const getOperationsController = async (req, res) => {
   const operations = await getOperationsByCustomerId(req.params.customerId);

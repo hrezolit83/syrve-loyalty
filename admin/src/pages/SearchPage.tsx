@@ -1,8 +1,15 @@
 import { useCallback, useState, type FormEvent } from 'react';
 
-import { ApiError, api, type Guest, type Operation } from '../api';
+import {
+  ApiError,
+  api,
+  type Guest,
+  type Operation,
+  type SyrveOperation,
+} from '../api';
 import { OperationForm } from '../components/OperationForm';
 import { OperationsTable } from '../components/OperationsTable';
+import { SyrveOperationsTable } from '../components/SyrveOperationsTable';
 import { formatAmount } from '../format';
 
 /**
@@ -15,6 +22,7 @@ export const SearchPage = () => {
   const [phone, setPhone] = useState('');
   const [guest, setGuest] = useState<Guest | null>(null);
   const [operations, setOperations] = useState<Operation[]>([]);
+  const [syrveOperations, setSyrveOperations] = useState<SyrveOperation[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -22,8 +30,15 @@ export const SearchPage = () => {
     const found = await api.searchGuest(phoneValue);
     setGuest(found);
 
-    const { operations: list } = await api.operations(found.customerId);
-    setOperations(list);
+    // Два незалежні джерела: наш журнал ручних операцій і зміни балансу
+    // з боку Syrve. Запитуємо паралельно — друге чекати на перше не мусить.
+    const [ours, syrve] = await Promise.all([
+      api.operations(found.customerId),
+      api.syrveOperations(found.customerId),
+    ]);
+
+    setOperations(ours.operations);
+    setSyrveOperations(syrve.operations);
   }, []);
 
   const handleSearch = async (event: FormEvent) => {
@@ -36,6 +51,7 @@ export const SearchPage = () => {
     } catch (err) {
       setGuest(null);
       setOperations([]);
+      setSyrveOperations([]);
       setError(
         err instanceof ApiError ? err.message : 'Не вдалося виконати пошук',
       );
@@ -119,6 +135,8 @@ export const SearchPage = () => {
           <OperationForm guest={guest} onDone={refresh} />
 
           <OperationsTable operations={operations} />
+
+          <SyrveOperationsTable operations={syrveOperations} />
         </>
       )}
     </div>

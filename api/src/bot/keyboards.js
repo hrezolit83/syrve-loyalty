@@ -4,6 +4,7 @@ export const BUTTONS = {
   SHARE_CONTACT: '📱 Надіслати контакт',
   MY_CARD: '💳 Моя картка',
   REFRESH_BALANCE: '🔄 Оновити баланс',
+  HISTORY: '📜 Історія',
 };
 
 /** Кнопка запиту контакту: номер Telegram підтверджує сам. */
@@ -17,5 +18,6 @@ export const menuKeyboard = new Keyboard()
   .text(BUTTONS.MY_CARD)
   .row()
   .text(BUTTONS.REFRESH_BALANCE)
+  .text(BUTTONS.HISTORY)
   .resized()
   .persistent();

@@ -94,6 +94,18 @@ export type Operation = {
   createdAt: string;
 };
 
+/** Д1: зміна балансу з боку Syrve (каса, кабінет, наша панель). */
+export type SyrveOperation = {
+  id: string;
+  revision: number;
+  type: string | null;
+  typeName: string | null;
+  sum: number;
+  balanceAfter: number | null;
+  comment: string | null;
+  whenCreated: string | null;
+};
+
 export type OperationResult = {
   operationId: string;
   type: 'topup' | 'chargeoff';
@@ -119,6 +131,11 @@ export const api = {
   operations: (customerId: string) =>
     request<{ operations: Operation[] }>(
       `/admin/guests/${customerId}/operations`,
+    ),
+
+  syrveOperations: (customerId: string) =>
+    request<{ operations: SyrveOperation[] }>(
+      `/admin/guests/${customerId}/syrve-operations`,
     ),
 
   applyOperation: (
