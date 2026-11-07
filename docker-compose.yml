@@ -1,0 +1,47 @@
+# Етап 1: інфраструктура для локальної розробки — база й Redis.
+# Контейнери api, worker і admin додаються на етапі 6, разом із повним
+# запуском "однією командою".
+#
+# Запуск: docker compose up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: syrve-loyalty-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-syrve_loyalty}
+    ports:
+      # Порт назовні — щоб зайти з pgAdmin або prisma studio з хоста.
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      # Named volume: дані живуть окремо від контейнера й не зникають після down.
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-syrve_loyalty}',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: syrve-loyalty-redis
+    restart: unless-stopped
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+  redisdata:

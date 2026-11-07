@@ -1,0 +1,118 @@
+// Prisma-схема — єдине джерело правди про структуру БД.
+// Зміни лише через міграції: npx prisma migrate dev --name <назва>.
+//
+// Принцип розподілу даних: баланс, картки й транзакції живуть у Syrve.
+// Тут зберігаємо тільки те, чого в Syrve немає:
+//   - зв'язок Telegram <-> гість Syrve,
+//   - адміністраторів нашої панелі,
+//   - журнал ручних операцій,
+//   - стан синхронізації транзакцій (щоб не дублювати сповіщення).
+
+generator client {
+  provider = "prisma-client-js"
+  // native — для Windows-машини розробника,
+  // debian-openssl-3.0.x — для образу node:22-slim у Docker.
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OperationType {
+  topup
+  chargeoff
+}
+
+enum OperationStatus {
+  success
+  failed
+}
+
+/// Адміністратор панелі. Створюється сід-скриптом із .env.
+model Admin {
+  id           String   @id @default(uuid()) @db.Uuid
+  login        String   @unique @db.VarChar(64)
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  operations Operation[]
+
+  @@map("admins")
+}
+
+/// Гість: зв'язок Telegram-акаунта з гостем у Syrve Loyalty.
+/// Ім'я, баланс і картка — у Syrve; тут лише ключі й курсор синхронізації.
+model Guest {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Telegram. Id користувача й чату — int64, тому BigInt.
+  telegramId BigInt  @unique @map("telegram_id")
+  chatId     BigInt  @map("chat_id")
+
+  // Заповнюються під час реєстрації (О2), тому nullable:
+  // гість спершу натискає /start, потім ділиться контактом і вводить ім'я.
+  phone           String? @unique @db.VarChar(20)
+  name            String? @db.VarChar(100)
+  syrveCustomerId String? @unique @map("syrve_customer_id") @db.Uuid
+  cardNumber      String? @map("card_number") @db.VarChar(32)
+
+  // Курсор для customer/transactions/by_revision: метод працює для ОДНОГО
+  // гостя, тому revision зберігається окремо для кожного.
+  lastRevision BigInt @default(0) @map("last_revision")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  operations             Operation[]
+  processedTransactions  ProcessedTransaction[]
+
+  @@index([createdAt])
+  @@map("guests")
+}
+
+/// Журнал ручних нарахувань і списань (О5): хто, коли, скільком, чому.
+/// Пишемо і невдалі спроби — інакше не видно, що адміністратор узагалі робив.
+model Operation {
+  id        String          @id @default(uuid()) @db.Uuid
+  adminId   String          @map("admin_id") @db.Uuid
+  guestId   String          @map("guest_id") @db.Uuid
+  type      OperationType
+  amount    Decimal         @db.Decimal(10, 2)
+  reason    String          @db.VarChar(255)
+  status    OperationStatus @default(success)
+  error     String?
+  createdAt DateTime        @default(now()) @map("created_at")
+
+  // Restrict: журнал операцій не можна втратити разом із гостем
+  // або адміністратором — це аудит.
+  admin Admin @relation(fields: [adminId], references: [id], onDelete: Restrict)
+  guest Guest @relation(fields: [guestId], references: [id], onDelete: Restrict)
+
+  @@index([guestId, createdAt])
+  @@index([adminId, createdAt])
+  @@map("operations")
+}
+
+/// Транзакції Syrve, які поллер уже побачив (О6).
+/// transactionId unique — головний захист від дубля сповіщення:
+/// навіть якщо та сама транзакція прийде двічі, вставка впаде на unique.
+model ProcessedTransaction {
+  id            String    @id @default(uuid()) @db.Uuid
+  transactionId String    @unique @map("transaction_id") @db.VarChar(64)
+  guestId       String    @map("guest_id") @db.Uuid
+  revision      BigInt
+  type          String    @db.VarChar(64)
+  sum           Decimal   @db.Decimal(10, 2)
+  balanceAfter  Decimal   @map("balance_after") @db.Decimal(10, 2)
+  // Коли сповіщення реально відправлено. NULL = транзакція врахована,
+  // але повідомлення ще не доставлено (задача в черзі або впала).
+  notifiedAt    DateTime? @map("notified_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  guest Guest @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  @@index([guestId, revision])
+  @@map("processed_transactions")
+}
