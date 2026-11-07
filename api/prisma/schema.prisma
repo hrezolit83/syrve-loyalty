@@ -62,6 +62,10 @@ model Guest {
   // гостя, тому revision зберігається окремо для кожного.
   lastRevision BigInt @default(0) @map("last_revision")
 
+  // Гість заблокував бота: Telegram повертає 403, і далі писати йому
+  // немає сенсу. Поллер такого гостя пропускає, доки він знову не напише /start.
+  botBlockedAt DateTime? @map("bot_blocked_at")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -110,12 +114,20 @@ model ProcessedTransaction {
   transactionId String    @unique @map("transaction_id") @db.VarChar(64)
   guestId       String    @map("guest_id") @db.Uuid
   revision      BigInt
+  // Syrve повертає числовий код (type) і назву (typeName): 35/RefillWalletFromApi,
+  // 40/WithdrawWalletFromApi. Зберігаємо обидва: код — для мапінгу, назву —
+  // щоб журнал можна було читати очима.
   type          String    @db.VarChar(64)
-  sum           Decimal   @db.Decimal(10, 2)
-  balanceAfter  Decimal   @map("balance_after") @db.Decimal(10, 2)
+  typeName      String?   @map("type_name") @db.VarChar(64)
+  sum           Decimal   @db.Decimal(14, 2)
+  // Може бути null: у транзакціях, які не змінюють баланс (SetGuestCategory),
+  // Syrve віддає balanceAfter = null.
+  balanceAfter  Decimal?  @map("balance_after") @db.Decimal(14, 2)
   // Коли сповіщення реально відправлено. NULL = транзакція врахована,
   // але повідомлення ще не доставлено (задача в черзі або впала).
   notifiedAt    DateTime? @map("notified_at")
+  // Текст останньої невдачі відправки — щоб було видно, чому не дійшло.
+  notifyError   String?   @map("notify_error")
   createdAt     DateTime  @default(now()) @map("created_at")
 
   guest Guest @relation(fields: [guestId], references: [id], onDelete: Cascade)

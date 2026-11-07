@@ -1,0 +1,12 @@
+{
+  "request": {
+    "url": "/customer/create_or_update",
+    "body": {
+      "phone": "+380991000001",
+      "organizationId": "67018360-fb28-4d49-b4e0-391d83ec6c57"
+    }
+  },
+  "response": {
+    "id": "0eaa0000-29b3-b8cb-8602-08df3d02005d"
+  }
+}

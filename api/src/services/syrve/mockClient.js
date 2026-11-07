@@ -32,11 +32,22 @@ const MOCK_PROGRAM = {
   isActive: true,
 };
 
-/** Типи транзакцій — назви як у Syrve, щоб шаблони повідомлень не переписувати. */
+/**
+ * Типи транзакцій — рівно ті, що віддає живий Syrve на нарахування і
+ * списання через API (перевірено, docs/api-samples/11-...json):
+ * числовий код у `type`, назва в `typeName`.
+ */
 const TRANSACTION_TYPES = {
-  topup: { type: 'ManualTopUp', typeName: 'Ручне нарахування' },
-  chargeoff: { type: 'ManualChargeOff', typeName: 'Ручне списання' },
+  topup: { type: '35', typeName: 'RefillWalletFromApi' },
+  chargeoff: { type: '40', typeName: 'WithdrawWalletFromApi' },
 };
+
+/**
+ * Ревізії в Syrve — великі 64-бітні числа (бачили 5 203 511 329).
+ * Мок стартує з такого ж порядку, щоб помилка з Int замість BigInt
+ * вилізла вже в мок-режимі, а не на живих даних.
+ */
+const REVISION_BASE = 5_200_000_000n;
 
 const toNumber = (value) => Number(value ?? 0);
 
@@ -145,10 +156,16 @@ export class MockSyrveClient extends SyrveClient {
       const delta = kind === 'topup' ? amount : -amount;
       const balanceAfter = balanceBefore + delta;
 
-      // Так само поводиться справжній Syrve: списати більше, ніж є, не дасть.
+      // УВАГА: справжній Syrve списання понад баланс НЕ відхиляє — перевірено
+      // на живому API, баланс спокійно пішов у -999993
+      // (docs/api-samples/10-chargeoff-over-balance.json).
+      // Мок поводиться так само, інакше він створював би ілюзію захисту,
+      // якого в Syrve немає. Єдиний захист — перевірка балансу перед
+      // списанням у services/operations.js.
       if (balanceAfter < 0) {
-        throw new SyrveValidationError(
-          `Недостатньо бонусів: на балансі ${balanceBefore}, списати ${amount}`,
+        logger.warn(
+          { customerId, balanceBefore, amount },
+          'Мок-Syrve: баланс пішов у мінус (як і справжній Syrve)',
         );
       }
 
@@ -158,7 +175,8 @@ export class MockSyrveClient extends SyrveClient {
         select: { revision: true },
       });
 
-      const revision = (last?.revision ?? 0n) + 1n;
+      // Крок 10, як у Syrve (ревізії там не йдуть щільно: 259, 299, 309).
+      const revision = (last?.revision ?? REVISION_BASE) + 10n;
       const { type, typeName } = TRANSACTION_TYPES[kind];
 
       await tx.mockCustomer.update({
@@ -217,6 +235,8 @@ export class MockSyrveClient extends SyrveClient {
       balanceAfter: toNumber(row.balanceAfter),
       comment: row.comment,
       whenCreated: row.whenCreated.toISOString(),
+      // Як у Syrve: транзакція належить гаманцю конкретної програми.
+      walletId: MOCK_PROGRAM.walletId,
     }));
 
     const lastRevision =

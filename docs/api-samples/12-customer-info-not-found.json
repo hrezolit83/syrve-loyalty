@@ -1,0 +1,4 @@
+{
+  "error": "POST https://api-eu.syrve.live/api/1/loyalty/syrve/customer/info → 400: {\"code\":\"Transport_WrongCustomerNumber\",\"errorCode\":\"Validation_IncorrectPhone\",\"message\":\"There is no user with phone +380999999998\",\"description\":\"Incorrect phone\",\"httpStatusCode\":400,\"uiMessage\":null,\"isIntegrationError\":false}",
+  "note": "Гостя немає: Syrve відповів помилкою — на цей текст спирається findCustomerByPhone"
+}

@@ -1,0 +1,4 @@
+{
+  "error": "{\"code\":null,\"errorCode\":\"Validation_CommonValidationError\",\"message\":\"Card with track=4078292632 already exists.\",\"description\":\"Common validation error\",\"httpStatusCode\":400,\"uiMessage\":null,\"isIntegrationError\":false}",
+  "note": "Текст Syrve на конфлікт номера картки"
+}

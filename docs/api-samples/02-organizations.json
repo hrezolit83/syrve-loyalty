@@ -1,0 +1,20 @@
+{
+  "request": {
+    "url": "/api/1/organizations",
+    "body": {
+      "returnAdditionalInfo": false,
+      "includeDisabled": false
+    }
+  },
+  "response": {
+    "correlationId": "516e0770-4b7b-4229-a282-21fff3cb9783",
+    "organizations": [
+      {
+        "responseType": "Simple",
+        "id": "67018360-fb28-4d49-b4e0-391d83ec6c57",
+        "name": "Демо В.С.",
+        "code": "DEMO"
+      }
+    ]
+  }
+}

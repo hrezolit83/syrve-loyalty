@@ -1,0 +1,13 @@
+{
+  "request": {
+    "url": "/api/1/access_token",
+    "body": {
+      "apiLogin": "<redacted>"
+    }
+  },
+  "response": {
+    "correlationId": "22271820-23d1-4e4d-8f29-fd629e3c3629",
+    "token": "<redacted>"
+  },
+  "note": "Токен діє 1 годину. Значення замінено на <redacted>."
+}

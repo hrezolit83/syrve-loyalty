@@ -128,7 +128,8 @@ const postJson = async (url, body, token, secrets = []) => {
  *  - будь-яке входження відомих секретів у рядках (на випадок, коли API
  *    повертає ключ усередині тексту помилки).
  */
-const SECRET_KEY_PATTERN = /token|apilogin|password|secret|authorization/i;
+const SECRET_KEY_PATTERN =
+  /token|apilogin|apiclientlogin|clientlogin|password|secret|authorization/i;
 
 const redact = (value, secrets) => {
   if (typeof value === 'string') {
@@ -267,6 +268,21 @@ const main = async () => {
       `   - ${name} | id=${id} | walletId=${walletId} | активна=${isActive}`,
     );
   }
+  // Зразок зберігаємо обрізаним. Повна відповідь містить marketingCampaigns —
+  // конфігурацію маркетингових кампаній замовника (правила нарахування, умови,
+  // відсотки), а репозиторій відкритий. Для мок-клієнта потрібні лише ці поля.
+  const PROGRAM_SAMPLE_FIELDS = [
+    'id',
+    'name',
+    'description',
+    'serviceFrom',
+    'serviceTo',
+    'notifyAboutBalanceChanges',
+    'programType',
+    'isActive',
+    'walletId',
+  ];
+
   saveSample(
     '03-loyalty-program.json',
     {
@@ -274,20 +290,219 @@ const main = async () => {
         url: '/api/1/loyalty/syrve/program',
         body: { organizationId },
       },
-      response: programsResponse.data,
+      response: {
+        Programs: programs.map((program) =>
+          Object.fromEntries(
+            PROGRAM_SAMPLE_FIELDS.map((field) => [field, program[field] ?? null]),
+          ),
+        ),
+      },
+      note: 'Прибрано marketingCampaigns — конфігурація кампаній замовника.',
     },
     secrets,
   );
 
-  // 4. Підсумок — що саме вписати в .env.
-  const activeProgram =
-    programs.find((p) => (p.isActive ?? p.IsActive) === true) ?? programs[0];
+  // 4. Гість, картка, баланс і транзакції.
+  //
+  // Створює тестового гостя в наданій тестовій організації — ТЗ це прямо
+  // дозволяє (розділ 2). Виконується лише з прапорцем --with-customer,
+  // щоб звичайний запуск нічого в Syrve не змінював.
+  if (process.argv.includes('--with-customer')) {
+    const programId = env.SYRVE_PROGRAM_ID || activeProgramId(programs);
+    const phone = process.env.EXPLORE_PHONE || '+380991000001';
+    const loyalty = `${apiUrl}/api/1/loyalty/syrve`;
 
+    console.log(`\n4) POST customer/create_or_update (${phone})`);
+    const created = await postJson(
+      `${loyalty}/customer/create_or_update`,
+      { phone, name: 'Тестовий Гість (розвідка API)', organizationId },
+      token,
+      secrets,
+    );
+    const customerId = created.data?.id ?? created.data?.customerId;
+    console.log(`   customerId=${customerId}`);
+    saveSample(
+      '04-customer-create_or_update.json',
+      { request: { url: '/customer/create_or_update', body: { phone, organizationId } }, response: created.data },
+      secrets,
+    );
+
+    console.log('\n5) POST customer/program/add');
+    try {
+      const programAdd = await postJson(
+        `${loyalty}/customer/program/add`,
+        { customerId, programId, organizationId },
+        token,
+        secrets,
+      );
+      console.log('   додано в програму');
+      saveSample(
+        '05-customer-program-add.json',
+        { request: { url: '/customer/program/add', body: { customerId, programId, organizationId } }, response: programAdd.data },
+        secrets,
+      );
+    } catch (error) {
+      // Найцінніший зразок: ТЕКСТ помилки "вже в програмі" — на нього
+      // спирається ensureInProgram() у сервісі гостей.
+      console.log(`   помилка (очікувана, якщо вже в програмі): ${error.message}`);
+      saveSample(
+        '05-customer-program-add-error.json',
+        { request: { url: '/customer/program/add' }, error: error.message, note: 'Текст Syrve на повторне додавання в програму' },
+        secrets,
+      );
+    }
+
+    console.log('\n6) POST customer/card/add');
+    const cardNumber = String(Date.now()).slice(-10);
+    try {
+      const cardAdd = await postJson(
+        `${loyalty}/customer/card/add`,
+        { customerId, cardTrack: cardNumber, cardNumber, organizationId },
+        token,
+        secrets,
+      );
+      console.log(`   видано картку ${cardNumber}`);
+      saveSample(
+        '06-customer-card-add.json',
+        { request: { url: '/customer/card/add', body: { customerId, cardTrack: cardNumber, cardNumber, organizationId } }, response: cardAdd.data },
+        secrets,
+      );
+    } catch (error) {
+      console.log(`   помилка: ${error.message}`);
+      saveSample('06-customer-card-add-error.json', { error: error.message }, secrets);
+    }
+
+    console.log('\n7) POST customer/info (type=phone)');
+    const info = await postJson(
+      `${loyalty}/customer/info`,
+      { type: 'phone', phone, organizationId },
+      token,
+      secrets,
+    );
+    saveSample(
+      '07-customer-info.json',
+      { request: { url: '/customer/info', body: { type: 'phone', phone, organizationId } }, response: info.data },
+      secrets,
+    );
+    const customer = info.data?.customer ?? info.data;
+    console.log(`   name=${customer?.name}`);
+    console.log(`   cards=${JSON.stringify(customer?.cards)}`);
+    console.log(`   walletBalances=${JSON.stringify(customer?.walletBalances)}`);
+
+    const wallets = customer?.walletBalances ?? [];
+    const programWallet =
+      wallets.find((item) => (item.id ?? item.walletId) && item.walletId === undefined) ?? wallets[0];
+    const walletId = programWallet?.id ?? programWallet?.walletId ?? null;
+    console.log(`   обраний walletId=${walletId}`);
+
+    console.log('\n8) POST customer/wallet/topup (+10)');
+    const topupBody = { customerId, walletId, sum: 10, comment: 'Розвідка API: нарахування', organizationId };
+    const topup = await postJson(`${loyalty}/customer/wallet/topup`, topupBody, token, secrets);
+    saveSample(
+      '08-customer-wallet-topup.json',
+      { request: { url: '/customer/wallet/topup', body: topupBody }, response: topup.data },
+      secrets,
+    );
+    console.log(`   відповідь: ${JSON.stringify(topup.data)}`);
+
+    console.log('\n9) POST customer/wallet/chargeoff (-4)');
+    const chargeBody = { customerId, walletId, sum: 4, comment: 'Розвідка API: списання', organizationId };
+    try {
+      const chargeoff = await postJson(`${loyalty}/customer/wallet/chargeoff`, chargeBody, token, secrets);
+      saveSample(
+        '09-customer-wallet-chargeoff.json',
+        { request: { url: '/customer/wallet/chargeoff', body: chargeBody }, response: chargeoff.data },
+        secrets,
+      );
+      console.log(`   відповідь: ${JSON.stringify(chargeoff.data)}`);
+    } catch (error) {
+      console.log(`   помилка: ${error.message}`);
+      saveSample('09-customer-wallet-chargeoff-error.json', { error: error.message }, secrets);
+    }
+
+    console.log('\n10) POST customer/wallet/chargeoff понад баланс (999999)');
+    try {
+      const over = await postJson(
+        `${loyalty}/customer/wallet/chargeoff`,
+        { customerId, walletId, sum: 999999, comment: 'Розвідка API: перебір', organizationId },
+        token,
+        secrets,
+      );
+      console.log(`   УВАГА: Syrve дозволив списати понад баланс: ${JSON.stringify(over.data)}`);
+      saveSample(
+        '10-chargeoff-over-balance.json',
+        { response: over.data, note: 'Syrve НЕ відхилив списання понад баланс — перевірка на нашій стороні обов\'язкова' },
+        secrets,
+      );
+    } catch (error) {
+      console.log(`   відхилено: ${error.message}`);
+      saveSample(
+        '10-chargeoff-over-balance.json',
+        { error: error.message, note: 'Текст відмови Syrve на списання понад баланс' },
+        secrets,
+      );
+    }
+
+    console.log('\n11) POST customer/transactions/by_revision (revision=0)');
+    const txBody = { customerId, revision: 0, pageSize: 100, organizationId };
+    const transactions = await postJson(
+      `${loyalty}/customer/transactions/by_revision`,
+      txBody,
+      token,
+      secrets,
+    );
+    saveSample(
+      '11-customer-transactions-by_revision.json',
+      { request: { url: '/customer/transactions/by_revision', body: txBody }, response: transactions.data },
+      secrets,
+    );
+
+    const list = transactions.data?.transactions ?? [];
+    console.log(`   транзакцій: ${list.length}, lastRevision=${transactions.data?.lastRevision}`);
+    for (const item of list) {
+      console.log(
+        `   - rev=${item.revision} type=${item.type} typeName=${item.typeName} sum=${item.sum} balanceAfter=${item.balanceAfter}`,
+      );
+    }
+
+    console.log('\n12) POST customer/info неіснуючого телефону');
+    try {
+      const missing = await postJson(
+        `${loyalty}/customer/info`,
+        { type: 'phone', phone: '+380999999998', organizationId },
+        token,
+        secrets,
+      );
+      console.log(`   відповідь: ${JSON.stringify(missing.data)?.slice(0, 200)}`);
+      saveSample(
+        '12-customer-info-not-found.json',
+        { response: missing.data, note: 'Гостя немає: Syrve відповів успіхом' },
+        secrets,
+      );
+    } catch (error) {
+      console.log(`   помилка: ${error.message}`);
+      saveSample(
+        '12-customer-info-not-found.json',
+        { error: error.message, note: 'Гостя немає: Syrve відповів помилкою — на цей текст спирається findCustomerByPhone' },
+        secrets,
+      );
+    }
+  }
+
+  // Підсумок — що саме вписати в .env.
   console.log('\n--- Що вписати в .env ---');
   console.log(`SYRVE_ORGANIZATION_ID=${organizationId}`);
-  if (activeProgram) {
-    console.log(`SYRVE_PROGRAM_ID=${activeProgram.id ?? activeProgram.Id}`);
-  }
+  const chosen = env.SYRVE_PROGRAM_ID || activeProgramId(programs);
+  if (chosen) console.log(`SYRVE_PROGRAM_ID=${chosen}`);
+};
+
+/** Перша активна програма — запасний варіант, якщо id не заданий у .env. */
+const activeProgramId = (programs) => {
+  const program =
+    programs.find((item) => (item.isActive ?? item.IsActive) === true) ??
+    programs[0];
+
+  return program ? (program.id ?? program.Id) : null;
 };
 
 main().catch((error) => {

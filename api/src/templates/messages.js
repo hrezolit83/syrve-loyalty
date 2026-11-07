@@ -5,9 +5,13 @@ import { GUEST_NAME_MAX, GUEST_NAME_MIN } from '../constants/index.js';
  * Інтерфейс лише українською (вимога ТЗ, розділ 3).
  */
 
-/** Бонуси: 1 бонус, 2 бонуси, 5 бонусів. */
+/** Бонуси: 1 бонус, 2 бонуси, 5 бонусів, 12,50 бонуса. */
 export const pluralizeBonus = (amount) => {
   const abs = Math.abs(Number(amount));
+
+  // З дробовою частиною в українській — родовий однини: "12,50 бонуса".
+  if (!Number.isInteger(abs)) return 'бонуса';
+
   const int = Math.trunc(abs);
   const lastTwo = int % 100;
   const last = int % 10;
@@ -95,17 +99,23 @@ export const MESSAGES = {
   genericError:
     'Щось пішло не так. Ми вже знаємо про це — спробуйте, будь ласка, пізніше.',
 
+  // balanceAfter може бути null: Syrve не завжди його віддає (перевірено
+  // на живому API). Краще не написати про баланс, ніж написати неправильний.
   notifyTopUp: ({ sum, balanceAfter, comment }) =>
     [
       `✅ Нараховано ${formatBonuses(sum)}.`,
-      `Баланс: ${formatBonuses(balanceAfter)}.`,
+      ...(balanceAfter === null || balanceAfter === undefined
+        ? []
+        : [`Баланс: ${formatBonuses(balanceAfter)}.`]),
       ...(comment ? ['', comment] : []),
     ].join('\n'),
 
   notifyChargeOff: ({ sum, balanceAfter, comment }) =>
     [
       `➖ Списано ${formatBonuses(sum)}.`,
-      `Баланс: ${formatBonuses(balanceAfter)}.`,
+      ...(balanceAfter === null || balanceAfter === undefined
+        ? []
+        : [`Баланс: ${formatBonuses(balanceAfter)}.`]),
       ...(comment ? ['', comment] : []),
     ].join('\n'),
 };

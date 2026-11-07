@@ -1,0 +1,75 @@
+{
+  "request": {
+    "url": "/customer/info",
+    "body": {
+      "type": "phone",
+      "phone": "+380991000001",
+      "organizationId": "67018360-fb28-4d49-b4e0-391d83ec6c57"
+    }
+  },
+  "response": {
+    "id": "0eaa0000-29b3-b8cb-8602-08df3d02005d",
+    "referrerId": null,
+    "name": "Тестовий Гість (розвідка API)",
+    "surname": null,
+    "middleName": null,
+    "comment": null,
+    "phone": "+380991000001",
+    "cultureName": "ru-RU",
+    "birthday": null,
+    "email": null,
+    "sex": 0,
+    "consentStatus": 1,
+    "anonymized": false,
+    "cards": [
+      {
+        "id": "0eaa0000-29b3-b8cb-4789-08df3d02006e",
+        "track": "4078292632",
+        "number": "4078292632",
+        "validToDate": null
+      }
+    ],
+    "categories": [
+      {
+        "id": "5ca20014-fc5c-4277-93f7-6cf8a7b7ab38",
+        "name": "Кэшбек 1%",
+        "isActive": true,
+        "isDefaultForNewGuests": true
+      }
+    ],
+    "walletBalances": [
+      {
+        "id": "0ba20000-29b3-b8cb-4481-08dd0f9b7994",
+        "name": "Бонусная программа в зале",
+        "type": 1,
+        "balance": 0
+      },
+      {
+        "id": "0eaa0000-29b3-b8cb-7be7-08de79e05361",
+        "name": "Бонусная программа в зале и в доставке",
+        "type": 1,
+        "balance": 0
+      },
+      {
+        "id": "0eaa0000-29b3-b8cb-c92d-08de5f1082c1",
+        "name": "Бонусная программа доставка",
+        "type": 1,
+        "balance": 0
+      }
+    ],
+    "userData": null,
+    "shouldReceivePromoActionsInfo": true,
+    "shouldReceiveLoyaltyInfo": true,
+    "shouldReceiveOrderStatusInfo": true,
+    "personalDataConsentFrom": null,
+    "personalDataConsentTo": null,
+    "personalDataProcessingFrom": null,
+    "personalDataProcessingTo": null,
+    "isDeleted": false,
+    "whenRegistered": "2026-11-07T20:04:51.525",
+    "lastProcessedOrderDate": null,
+    "firstOrderDate": null,
+    "lastVisitedOrganizationId": null,
+    "registrationOrganizationId": "67018360-fb28-4d49-b4e0-391d83ec6c57"
+  }
+}

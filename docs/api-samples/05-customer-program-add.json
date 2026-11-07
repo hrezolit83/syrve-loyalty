@@ -1,0 +1,14 @@
+{
+  "request": {
+    "url": "/customer/program/add",
+    "body": {
+      "customerId": "0eaa0000-29b3-b8cb-8602-08df3d02005d",
+      "programId": "0eaa0000-29b3-b8cb-5653-08de79e05361",
+      "organizationId": "67018360-fb28-4d49-b4e0-391d83ec6c57"
+    }
+  },
+  "response": {
+    "userWalletId": "12afcdf4-0e29-497d-9b0b-69807f678a23",
+    "walletId": "0eaa0000-29b3-b8cb-7be7-08de79e05361"
+  }
+}

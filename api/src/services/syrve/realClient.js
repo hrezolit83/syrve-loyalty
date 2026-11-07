@@ -146,14 +146,38 @@ export class RealSyrveClient extends SyrveClient {
 
   /**
    * Перетворює відповідь Syrve на нормалізовану помилку.
-   * Текст від Syrve клієнтові не показуємо (у ньому буває apiLogin),
-   * але correlationId зберігаємо — за ним Syrve знайде запит у своїх логах.
+   *
+   * Syrve віддає помилки у ДВОХ різних форматах — перевірено на живому API:
+   *   транспортні (/access_token, /organizations):
+   *     {correlationId, errorDescription}
+   *   методи лояльності (/loyalty/syrve/*):
+   *     {code, errorCode, message, description, httpStatusCode, uiMessage}
+   * Тому збираємо текст з усіх можливих полів: якщо читати лише
+   * errorDescription, помилка "гостя немає" виглядала б як порожня.
+   *
+   * Текст від Syrve клієнтові не показуємо (у транспортному форматі він
+   * повторює apiLogin), але correlationId зберігаємо — за ним Syrve знайде
+   * запит у своїх логах.
    */
   #toError(response, payload) {
     const correlationId = payload?.correlationId ?? null;
+
     const description =
-      typeof payload === 'string' ? payload : (payload?.errorDescription ?? '');
-    const options = { status: response.status, correlationId, details: description || null };
+      typeof payload === 'string'
+        ? payload
+        : [payload?.errorDescription, payload?.message, payload?.description]
+            .filter(Boolean)
+            .join(' | ');
+
+    const codes = [payload?.code, payload?.errorCode]
+      .filter(Boolean)
+      .join(' ');
+
+    const options = {
+      status: response.status,
+      correlationId,
+      details: [codes, description].filter(Boolean).join(': ') || null,
+    };
 
     if (response.status === 401 || response.status === 403) {
       return new SyrveAuthError(
@@ -162,7 +186,16 @@ export class RealSyrveClient extends SyrveClient {
       );
     }
 
-    if (response.status === 404 || /not\s*found|не\s*найден/i.test(description)) {
+    // "Гостя немає" Syrve віддає як 400 Transport_WrongCustomerNumber
+    // з текстом "There is no user with phone ...", а не як 404.
+    const isMissing =
+      response.status === 404 ||
+      /there\s+is\s+no\s+user|not\s*found|не\s*найден|не\s*знайдено/i.test(
+        description,
+      ) ||
+      /WrongCustomerNumber/i.test(codes);
+
+    if (isMissing) {
       return new SyrveNotFoundError('Syrve не знайшов запис', options);
     }
 
@@ -444,15 +477,27 @@ export class RealSyrveClient extends SyrveClient {
       { customerId, revision, pageSize, organizationId },
     );
 
+    // Беремо лише потрібні поля. У відповіді Syrve є ще apiClientLogin,
+    // loyaltyUser, terminalGroupId тощо — у нашу БД і логи вони не потрапляють.
     const transactions = (payload?.transactions ?? []).map((item) => ({
       id: item.id,
       revision: Number(item.revision),
+      // Числовий код типу (21, 35, 40) — саме так віддає Syrve.
       type: item.type ?? null,
       typeName: item.typeName ?? null,
       sum: Number(item.sum ?? 0),
-      balanceAfter: Number(item.balanceAfter ?? 0),
+      // null у транзакціях, які не змінюють баланс — не підмінюємо нулем,
+      // інакше гість отримав би "баланс: 0".
+      balanceAfter:
+        item.balanceAfter === null || item.balanceAfter === undefined
+          ? null
+          : Number(item.balanceAfter),
       comment: item.comment ?? null,
       whenCreated: item.whenCreated ?? null,
+      // Гість може бути в кількох програмах одночасно (у тестовій
+      // організації їх чотири). Без walletId не відрізнити транзакцію
+      // нашої програми від чужої.
+      walletId: item.walletId ?? null,
     }));
 
     return {

@@ -14,6 +14,9 @@ export const logger = pino({
   redact: {
     paths: [
       'apiLogin',
+      // Syrve повертає це поле у транзакціях — там може бути логін ключа.
+      'apiClientLogin',
+      '*.apiClientLogin',
       'token',
       'password',
       'passwordHash',

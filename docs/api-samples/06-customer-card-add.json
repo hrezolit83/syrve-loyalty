@@ -1,0 +1,12 @@
+{
+  "request": {
+    "url": "/customer/card/add",
+    "body": {
+      "customerId": "0eaa0000-29b3-b8cb-8602-08df3d02005d",
+      "cardTrack": "4078292632",
+      "cardNumber": "4078292632",
+      "organizationId": "67018360-fb28-4d49-b4e0-391d83ec6c57"
+    }
+  },
+  "response": {}
+}
