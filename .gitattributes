@@ -1,0 +1,10 @@
+# Нормалізація переводів рядка: у репозиторії завжди LF.
+# Узгоджено з .editorconfig (end_of_line = lf) і потрібно, щоб файли,
+# скопійовані в Linux-контейнер, не мали CRLF.
+* text=auto eol=lf
+
+# Бінарні файли не чіпати.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary

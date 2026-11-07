@@ -1,0 +1,32 @@
+# ---------- Залежності ----------
+node_modules/
+
+# ---------- Секрети ----------
+.env
+.env.*
+!.env.example
+
+# ---------- Збірки ----------
+dist/
+build/
+
+# ---------- Тести ----------
+coverage/
+
+# ---------- Логи ----------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---------- Редактори та ОС ----------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*~
+
+# ---------- Особисті нотатки, не частина репозиторію ----------
+INTERVIEW.md
