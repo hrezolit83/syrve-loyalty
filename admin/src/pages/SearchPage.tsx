@@ -3,6 +3,7 @@ import { useCallback, useState, type FormEvent } from 'react';
 import { ApiError, api, type Guest, type Operation } from '../api';
 import { OperationForm } from '../components/OperationForm';
 import { OperationsTable } from '../components/OperationsTable';
+import { formatAmount } from '../format';
 
 /**
  * Пошук гостя за телефоном (О4) + операції з його бонусами (О5).
@@ -93,7 +94,7 @@ export const SearchPage = () => {
               </div>
               <div>
                 <dt>Баланс</dt>
-                <dd className="balance">{guest.balance}</dd>
+                <dd className="balance">{formatAmount(guest.balance)}</dd>
               </div>
               <div>
                 <dt>Telegram</dt>

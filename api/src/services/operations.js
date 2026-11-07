@@ -2,6 +2,7 @@ import createHttpError from 'http-errors';
 
 import { OPERATION_LOCK_TIMEOUT_MS } from '../constants/index.js';
 import { prisma } from '../db/prisma.js';
+import { formatAmount } from '../templates/messages.js';
 import { logger } from '../utils/logger.js';
 import {
   getSyrveClient,
@@ -131,7 +132,9 @@ export const applyOperation = async ({
         if (type === 'chargeoff' && customer.balance < amount) {
           throw createHttpError(
             409,
-            `Недостатньо бонусів: на балансі ${customer.balance}, списати ${amount}`,
+            `Недостатньо бонусів: на балансі ${formatAmount(
+              customer.balance,
+            )}, списати ${formatAmount(amount)}`,
           );
         }
 

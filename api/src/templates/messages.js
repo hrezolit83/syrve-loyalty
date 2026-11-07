@@ -22,10 +22,30 @@ export const pluralizeBonus = (amount) => {
   return 'бонусів';
 };
 
-/** 110 або 110.50 — без зайвих нулів. */
+/**
+ * Число українською: 110 або 12,50.
+ *
+ * Intl.NumberFormat('uk-UA') ставить кому як десятковий роздільник і
+ * нерозривний пробіл у розрядах (1 250). Цілі числа показуємо без копійок,
+ * дробові — завжди з двома знаками, щоб "12,5" не читалося як обрізане.
+ */
+const INTEGER_FORMAT = new Intl.NumberFormat('uk-UA', {
+  maximumFractionDigits: 0,
+});
+
+const DECIMAL_FORMAT = new Intl.NumberFormat('uk-UA', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 export const formatAmount = (amount) => {
   const value = Number(amount);
-  return Number.isInteger(value) ? String(value) : value.toFixed(2);
+
+  if (!Number.isFinite(value)) return String(amount);
+
+  return Number.isInteger(value)
+    ? INTEGER_FORMAT.format(value)
+    : DECIMAL_FORMAT.format(value);
 };
 
 export const formatBonuses = (amount) =>

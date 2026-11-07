@@ -6,6 +6,7 @@ import {
   getOperationsByCustomerId,
 } from '../services/operations.js';
 import { getSyrveClient } from '../services/syrve/index.js';
+import { formatAmount } from '../templates/messages.js';
 import { logger } from '../utils/logger.js';
 import { formatPhone, normalizePhone } from '../utils/phone.js';
 
@@ -79,8 +80,8 @@ const operationController = (type) => async (req, res) => {
     status: 200,
     message:
       type === 'topup'
-        ? `Нараховано ${amount}. Новий баланс: ${result.balance}`
-        : `Списано ${amount}. Новий баланс: ${result.balance}`,
+        ? `Нараховано ${formatAmount(amount)}. Новий баланс: ${formatAmount(result.balance)}`
+        : `Списано ${formatAmount(amount)}. Новий баланс: ${formatAmount(result.balance)}`,
     data: result,
   });
 };

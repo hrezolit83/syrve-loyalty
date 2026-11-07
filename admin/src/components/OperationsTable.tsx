@@ -1,18 +1,10 @@
 import type { Operation } from '../api';
+import { formatAmount, formatDateTime } from '../format';
 
 const TYPE_LABELS: Record<Operation['type'], string> = {
   topup: 'Нарахування',
   chargeoff: 'Списання',
 };
-
-const formatDate = (value: string) =>
-  new Date(value).toLocaleString('uk-UA', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 
 /** Журнал операцій гостя. Невдалі спроби теж показуємо — це аудит. */
 export const OperationsTable = ({
@@ -50,11 +42,11 @@ export const OperationsTable = ({
               key={operation.id}
               className={operation.status === 'failed' ? 'row-failed' : ''}
             >
-              <td className="nowrap">{formatDate(operation.createdAt)}</td>
+              <td className="nowrap">{formatDateTime(operation.createdAt)}</td>
               <td>{TYPE_LABELS[operation.type]}</td>
               <td className="right nowrap">
                 {operation.type === 'topup' ? '+' : '−'}
-                {operation.amount}
+                {formatAmount(operation.amount)}
               </td>
               <td>{operation.reason}</td>
               <td>{operation.adminLogin}</td>

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 
 import { ApiError, api, type Guest } from '../api';
+import { formatAmount } from '../format';
 
 type Props = {
   guest: Guest;
@@ -53,7 +54,7 @@ export const OperationForm = ({ guest, onDone }: Props) => {
     }
 
     const confirmed = window.confirm(
-      `${TYPE_LABELS[type]} ${parsedAmount} бонусів гостю ${
+      `${TYPE_LABELS[type]} ${formatAmount(parsedAmount)} бонусів гостю ${
         guest.name ?? guest.phoneFormatted
       }?\n\nПричина: ${reason.trim()}`,
     );
@@ -71,9 +72,9 @@ export const OperationForm = ({ guest, onDone }: Props) => {
       );
 
       setSuccess(
-        `${type === 'topup' ? 'Нараховано' : 'Списано'} ${
-          result.amount
-        }. Новий баланс: ${result.balance}`,
+        `${type === 'topup' ? 'Нараховано' : 'Списано'} ${formatAmount(
+          result.amount,
+        )}. Новий баланс: ${formatAmount(result.balance)}`,
       );
       setAmount('');
       setReason('');
