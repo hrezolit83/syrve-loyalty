@@ -26,6 +26,20 @@ export const OperationForm = ({ guest, onDone }: Props) => {
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  /**
+   * Прибирає повідомлення про попередню операцію, щойно адміністратор
+   * почав змінювати форму: інакше "Нараховано 100" висить над формою, у якій
+   * уже набирають наступну суму, і виглядає як результат нової операції.
+   *
+   * Робимо саме в обробниках зміни, а не в useEffect на [type, amount, reason]:
+   * після успіху ми самі чистимо суму й причину, і ефект негайно з'їв би
+   * повідомлення про успіх.
+   */
+  const clearFeedback = () => {
+    setError(null);
+    setSuccess(null);
+  };
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
@@ -90,7 +104,10 @@ export const OperationForm = ({ guest, onDone }: Props) => {
             type="radio"
             name="type"
             checked={type === 'topup'}
-            onChange={() => setType('topup')}
+            onChange={() => {
+              setType('topup');
+              clearFeedback();
+            }}
           />
           Нарахувати
         </label>
@@ -99,7 +116,10 @@ export const OperationForm = ({ guest, onDone }: Props) => {
             type="radio"
             name="type"
             checked={type === 'chargeoff'}
-            onChange={() => setType('chargeoff')}
+            onChange={() => {
+              setType('chargeoff');
+              clearFeedback();
+            }}
           />
           Списати
         </label>
@@ -112,7 +132,10 @@ export const OperationForm = ({ guest, onDone }: Props) => {
             type="text"
             inputMode="decimal"
             value={amount}
-            onChange={(event) => setAmount(event.target.value)}
+            onChange={(event) => {
+              setAmount(event.target.value);
+              clearFeedback();
+            }}
             placeholder="100"
             required
           />
@@ -123,7 +146,10 @@ export const OperationForm = ({ guest, onDone }: Props) => {
           <input
             type="text"
             value={reason}
-            onChange={(event) => setReason(event.target.value)}
+            onChange={(event) => {
+              setReason(event.target.value);
+              clearFeedback();
+            }}
             placeholder="Вітальний бонус"
             minLength={3}
             maxLength={200}
