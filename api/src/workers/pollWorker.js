@@ -60,6 +60,12 @@ export const createPollWorker = () => {
     },
   );
 
+  // Лог кожного проходу: без нього не видно, чи розклад узагалі тікає —
+  // при тихій базі синхронізація нічого не пише.
+  worker.on('completed', (job, result) => {
+    logger.debug({ jobId: job.id, ...result }, 'Прохід поллера завершено');
+  });
+
   worker.on('failed', (job, err) => {
     logger.error({ jobId: job?.id, err: err.message }, 'Прохід поллера впав');
   });
