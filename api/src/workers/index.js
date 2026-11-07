@@ -2,8 +2,8 @@
 // HTTP-порт не слухає. Його робота: Telegram-бот (long polling),
 // поллер транзакцій Syrve і черга сповіщень.
 //
-// Етап 1 — лише каркас і коректне завершення; бот і поллер додаються
-// на етапах 3 і 5.
+// Етап 3 — Telegram-бот; поллер і черга сповіщень додаються на етапі 5.
+import { bot, isBotEnabled, startBot } from '../bot/bot.js';
 import { initPrismaConnection, closePrismaConnection } from '../db/prisma.js';
 import { logger } from '../utils/logger.js';
 
@@ -11,8 +11,12 @@ const workers = [];
 
 const bootstrap = async () => {
   try {
+    // Prisma потрібна воркеру: бот читає й пише гостей.
     await initPrismaConnection();
-    logger.info('Воркер запущено (черги й бот додаються на етапах 3 і 5)');
+
+    await startBot();
+
+    logger.info('Воркер запущено');
   } catch (error) {
     logger.error({ err: error }, 'Старт воркера не вдався');
     process.exit(1);
@@ -26,6 +30,7 @@ const shutdown = async (signal) => {
 
   try {
     await Promise.all(workers.map((worker) => worker.close()));
+    if (isBotEnabled()) await bot.stop();
   } catch (err) {
     logger.error({ err }, 'Помилка під час завершення');
   }

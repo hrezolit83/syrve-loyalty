@@ -86,6 +86,14 @@ export class MockSyrveClient extends SyrveClient {
     return row ? this.#toCustomer(row) : null;
   }
 
+  async findCustomerById(customerId) {
+    const row = await prisma.mockCustomer.findUnique({
+      where: { id: customerId },
+    });
+
+    return row ? this.#toCustomer(row) : null;
+  }
+
   async createOrUpdateCustomer({ phone, name }) {
     const row = await prisma.mockCustomer.upsert({
       where: { phone },

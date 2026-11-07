@@ -7,11 +7,18 @@
  */
 
 export class SyrveError extends Error {
-  constructor(message, { status = null, correlationId = null, cause } = {}) {
+  constructor(
+    message,
+    { status = null, correlationId = null, details = null, cause } = {},
+  ) {
     super(message, { cause });
     this.name = 'SyrveError';
     this.status = status;
     this.correlationId = correlationId;
+    // Текст від Syrve. Потрібен коду (розрізнити "вже в програмі" від реальної
+    // помилки) і логам. Користувачеві не показуємо: Syrve повторює в ньому
+    // apiLogin у відповіді 401.
+    this.details = details;
   }
 }
 

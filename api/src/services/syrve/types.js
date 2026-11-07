@@ -75,6 +75,11 @@ export class SyrveClient {
     return notImplemented('findCustomerByPhone');
   }
 
+  /** @returns {Promise<SyrveCustomer|null>} null — гостя немає */
+  async findCustomerById(customerId) {
+    return notImplemented('findCustomerById');
+  }
+
   /** @returns {Promise<string>} id гостя */
   async createOrUpdateCustomer({ phone, name }) {
     return notImplemented('createOrUpdateCustomer');

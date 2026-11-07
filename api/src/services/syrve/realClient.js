@@ -153,7 +153,7 @@ export class RealSyrveClient extends SyrveClient {
     const correlationId = payload?.correlationId ?? null;
     const description =
       typeof payload === 'string' ? payload : (payload?.errorDescription ?? '');
-    const options = { status: response.status, correlationId };
+    const options = { status: response.status, correlationId, details: description || null };
 
     if (response.status === 401 || response.status === 403) {
       return new SyrveAuthError(
@@ -329,15 +329,15 @@ export class RealSyrveClient extends SyrveClient {
     };
   }
 
-  async findCustomerByPhone(phone) {
+  /** Спільна частина для пошуку за телефоном і за id. */
+  async #getCustomerInfo(query) {
     const organizationId = await this.#getOrganizationId();
     const program = await this.getProgram();
 
     let payload;
     try {
       payload = await this.#request('/api/1/loyalty/syrve/customer/info', {
-        type: 'phone',
-        phone,
+        ...query,
         organizationId,
       });
     } catch (error) {
@@ -357,7 +357,7 @@ export class RealSyrveClient extends SyrveClient {
     return {
       id: customer.id,
       name: customer.name ?? null,
-      phone: customer.phone ?? phone,
+      phone: customer.phone ?? query.phone ?? null,
       cards: (customer.cards ?? []).map((card) => ({
         number: card.number ?? null,
         track: card.track ?? null,
@@ -365,6 +365,14 @@ export class RealSyrveClient extends SyrveClient {
       balance,
       walletId: walletId ?? program.walletId,
     };
+  }
+
+  async findCustomerByPhone(phone) {
+    return this.#getCustomerInfo({ type: 'phone', phone });
+  }
+
+  async findCustomerById(customerId) {
+    return this.#getCustomerInfo({ type: 'id', id: customerId });
   }
 
   async createOrUpdateCustomer({ phone, name }) {
