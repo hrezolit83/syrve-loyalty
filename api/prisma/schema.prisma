@@ -116,3 +116,50 @@ model ProcessedTransaction {
   @@index([guestId, revision])
   @@map("processed_transactions")
 }
+
+// ---------------------------------------------------------------------------
+// Мок-режим (SYRVE_MODE=mock): імітація сховища Syrve, щоб сервіс можна було
+// запустити й показати без доступу до Syrve (вимога ТЗ, розділ 6).
+//
+// Чому окремі таблиці, а не пам'ять процесу: api і worker — два різні процеси.
+// Нарахування робить api, а поллер сповіщень живе у worker. У пам'яті вони
+// одне одного не побачили б, і О6 у мок-режимі не працювала б.
+// Ці таблиці — "чужі" дані: сервіс до них звертається ТІЛЬКИ через мок-клієнт.
+// ---------------------------------------------------------------------------
+
+/// Гість у мок-Syrve. Його id грає роль syrveCustomerId.
+model MockCustomer {
+  id         String   @id @default(uuid()) @db.Uuid
+  phone      String   @unique @db.VarChar(20)
+  name       String   @db.VarChar(100)
+  cardNumber String?  @map("card_number") @db.VarChar(32)
+  cardTrack  String?  @map("card_track") @db.VarChar(32)
+  inProgram  Boolean  @default(false) @map("in_program")
+  balance    Decimal  @default(0) @db.Decimal(10, 2)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  transactions MockTransaction[]
+
+  @@map("mock_customers")
+}
+
+/// Транзакція в мок-Syrve. revision — монотонний лічильник у межах гостя,
+/// як у customer/transactions/by_revision.
+model MockTransaction {
+  id           String   @id @default(uuid()) @db.Uuid
+  customerId   String   @map("customer_id") @db.Uuid
+  revision     BigInt
+  type         String   @db.VarChar(64)
+  typeName     String   @map("type_name") @db.VarChar(64)
+  sum          Decimal  @db.Decimal(10, 2)
+  balanceAfter Decimal  @map("balance_after") @db.Decimal(10, 2)
+  comment      String?  @db.VarChar(255)
+  whenCreated  DateTime @default(now()) @map("when_created")
+
+  customer MockCustomer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, revision])
+  @@index([customerId, revision])
+  @@map("mock_transactions")
+}
