@@ -111,6 +111,11 @@ export const syncGuestTransactions = async (guest) => {
               typeName: item.typeName ?? null,
               sum: item.sum,
               balanceAfter: item.balanceAfter,
+              comment: item.comment ?? null,
+              // Час із Syrve, а не наш: поллер бачить транзакцію із
+              // затримкою до POLL_INTERVAL_SEC, і в журналі панелі мав би
+              // стояти момент самої операції.
+              whenCreated: item.whenCreated ? new Date(item.whenCreated) : null,
             })),
             // Той самий transactionId удруге не вставиться:
             // unique + skipDuplicates.

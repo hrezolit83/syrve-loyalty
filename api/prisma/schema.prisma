@@ -123,6 +123,12 @@ model ProcessedTransaction {
   // Може бути null: у транзакціях, які не змінюють баланс (SetGuestCategory),
   // Syrve віддає balanceAfter = null.
   balanceAfter  Decimal?  @map("balance_after") @db.Decimal(14, 2)
+  // Коментар і час із Syrve. Потрібні сторінці «Транзакції»: показувати
+  // треба те, коли операція сталася в Syrve, а не коли її побачив поллер.
+  // Nullable, бо рядки, записані до появи цих колонок, їх не мають —
+  // у такому разі показуємо createdAt.
+  comment       String?   @db.VarChar(255)
+  whenCreated   DateTime? @map("when_created")
   // Коли сповіщення реально відправлено. NULL = транзакція врахована,
   // але повідомлення ще не доставлено (задача в черзі або впала).
   notifiedAt    DateTime? @map("notified_at")
@@ -133,6 +139,8 @@ model ProcessedTransaction {
   guest Guest @relation(fields: [guestId], references: [id], onDelete: Cascade)
 
   @@index([guestId, revision])
+  // Сторінка «Транзакції» і статистика (Д9) читають за періодом.
+  @@index([createdAt])
   @@map("processed_transactions")
 }
 

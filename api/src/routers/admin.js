@@ -10,6 +10,10 @@ import {
   topUpController,
 } from '../controllers/guests.js';
 import { getStatsController } from '../controllers/stats.js';
+import {
+  exportTransactionsController,
+  getTransactionsController,
+} from '../controllers/transactions.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { validateBody } from '../middlewares/validateBody.js';
 import { validateQuery } from '../middlewares/validateQuery.js';
@@ -17,6 +21,10 @@ import { ctrlWrapper } from '../utils/ctrlWrapper.js';
 import { guestsQuerySchema } from '../validation/guests.js';
 import { operationSchema } from '../validation/operations.js';
 import { statsQuerySchema } from '../validation/stats.js';
+import {
+  transactionsExportQuerySchema,
+  transactionsQuerySchema,
+} from '../validation/transactions.js';
 
 const router = Router();
 
@@ -28,6 +36,20 @@ router.get(
   '/stats',
   validateQuery(statsQuerySchema),
   ctrlWrapper(getStatsController),
+);
+
+// Журнал транзакцій усіх гостей. Експорт — ДО '/transactions',
+// інакше 'export' не має значення, але порядок лишаємо явним.
+router.get(
+  '/transactions/export',
+  validateQuery(transactionsExportQuerySchema),
+  ctrlWrapper(exportTransactionsController),
+);
+
+router.get(
+  '/transactions',
+  validateQuery(transactionsQuerySchema),
+  ctrlWrapper(getTransactionsController),
 );
 
 // Д2: список гостей із пошуком, сортуванням і пагінацією.

@@ -10,6 +10,8 @@
   border-radius: var(--radius-sm);
   background: var(--accent);
   color: var(--accent-text);
+  /* Кнопкою буває і посилання (експорт файлу) — підкреслення зайве. */
+  text-decoration: none;
   cursor: pointer;
 }
 

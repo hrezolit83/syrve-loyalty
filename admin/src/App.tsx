@@ -15,6 +15,7 @@ import { HomePage } from './pages/HomePage';
 import { GuestsPage } from './pages/GuestsPage';
 import { LoginPage } from './pages/LoginPage';
 import { SearchPage } from './pages/SearchPage';
+import { TransactionsPage } from './pages/TransactionsPage';
 import { useAuth } from './useAuth';
 import styles from './App.module.css';
 
@@ -68,6 +69,15 @@ export const App = () => (
           element={
             <Protected>
               <SearchPage />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/transactions"
+          element={
+            <Protected>
+              <TransactionsPage />
             </Protected>
           }
         />

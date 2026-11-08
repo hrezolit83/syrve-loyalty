@@ -100,6 +100,51 @@ export type Stats = {
   series: StatsPoint[];
 };
 
+/** Звідки прийшла транзакція: наша панель (через API) чи сам Syrve. */
+export type TransactionSource = 'panel' | 'syrve';
+
+export type Transaction = {
+  id: string;
+  transactionId: string;
+  date: string;
+  sum: number;
+  balanceAfter: number | null;
+  comment: string | null;
+  type: string | null;
+  typeName: string | null;
+  source: TransactionSource;
+  guest: {
+    id: string;
+    customerId: string | null;
+    name: string | null;
+    phoneFormatted: string;
+  };
+};
+
+export type TransactionList = {
+  transactions: Transaction[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export type TransactionFilters = {
+  period: Period;
+  type: '' | 'topup' | 'chargeoff';
+  page?: number;
+};
+
+/** Рядок запиту для журналу транзакцій — спільний для списку й експорту. */
+const transactionsQuery = ({ period, type, page }: TransactionFilters) => {
+  const query = new URLSearchParams({ period });
+
+  if (type) query.set('type', type);
+  if (page) query.set('page', String(page));
+
+  return query.toString();
+};
+
 export type Admin = { id: string; login: string };
 
 /** Рядок списку гостей (Д2) — із нашої БД, без балансу. */
@@ -168,6 +213,17 @@ export type OperationResult = {
 export const api = {
   /** Д9: показники головної сторінки. */
   stats: (period: Period) => request<Stats>(`/admin/stats?period=${period}`),
+
+  transactions: (filters: TransactionFilters) =>
+    request<TransactionList>(`/admin/transactions?${transactionsQuery(filters)}`),
+
+  /**
+   * Адреса експорту, а не запит: файл забирає сам браузер через <a download>.
+   * Токен лежить у httpOnly cookie й їде зі звичайним переходом, тому ні
+   * fetch, ні Blob тут не потрібні.
+   */
+  transactionsExportUrl: (filters: TransactionFilters) =>
+    `/api/admin/transactions/export?${transactionsQuery({ ...filters, page: undefined })}`,
 
   login: (login: string, password: string) =>
     request<{ admin: Admin }>('/auth/login', {

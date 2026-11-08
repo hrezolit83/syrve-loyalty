@@ -1,0 +1,67 @@
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-11);
+}
+
+.title {
+  font-size: 1.35rem;
+  margin: 0;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-11);
+}
+
+.summary {
+  composes: muted from '../styles/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-7);
+  margin-left: auto;
+}
+
+.empty {
+  composes: muted from '../styles/typography.module.css';
+}
+
+.guestLink {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.guestLink:hover {
+  text-decoration: underline;
+}
+
+.phone {
+  composes: muted from '../styles/typography.module.css';
+  display: block;
+  font-size: 0.8rem;
+}
+
+/* Знак суми дублюється кольором — сам знак лишається в тексті. */
+.amountPlus {
+  color: var(--ok-text);
+}
+
+.amountMinus {
+  color: var(--fail-text);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-11);
+}
+
+.pageCounter {
+  composes: muted from '../styles/typography.module.css';
+}

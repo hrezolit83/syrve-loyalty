@@ -18,3 +18,23 @@ export const Button = ({
     {...rest}
   />
 );
+
+/**
+ * Те саме, але посилання.
+ *
+ * Потрібне для завантаження файлу: <a download> браузер обробляє сам і
+ * надсилає cookie, тоді як кнопці довелося б тягнути вміст через fetch
+ * і збирати Blob руками.
+ */
+export const ButtonLink = ({
+  variant = 'primary',
+  className,
+  ...rest
+}: ComponentPropsWithoutRef<'a'> & {
+  variant?: 'primary' | 'secondary' | 'link';
+}) => (
+  <a
+    className={cx(styles.button, variant !== 'primary' && styles[variant], className)}
+    {...rest}
+  />
+);

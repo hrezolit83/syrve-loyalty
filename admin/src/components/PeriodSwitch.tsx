@@ -1,8 +1,7 @@
 import type { Period } from '../api';
-import { cx } from '../cx';
-import styles from './PeriodSwitch.module.css';
+import { SegmentedSwitch, type SegmentedOption } from './SegmentedSwitch';
 
-const PERIODS: { value: Period; label: string }[] = [
+const PERIODS: SegmentedOption<Period>[] = [
   { value: 'today', label: 'Сьогодні' },
   { value: '7d', label: '7 днів' },
   { value: '30d', label: '30 днів' },
@@ -22,18 +21,11 @@ export const PeriodSwitch = ({
   onChange: (period: Period) => void;
   disabled?: boolean;
 }) => (
-  <div className={styles.group} role="group" aria-label="Період">
-    {PERIODS.map((period) => (
-      <button
-        key={period.value}
-        type="button"
-        className={cx(styles.option, value === period.value && styles.active)}
-        aria-pressed={value === period.value}
-        disabled={disabled}
-        onClick={() => onChange(period.value)}
-      >
-        {period.label}
-      </button>
-    ))}
-  </div>
+  <SegmentedSwitch
+    label="Період"
+    options={PERIODS}
+    value={value}
+    onChange={onChange}
+    disabled={disabled}
+  />
 );
