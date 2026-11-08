@@ -8,15 +8,15 @@ flowchart TB
     admin_user["Адміністратор<br/>браузер"]
 
     subgraph docker["docker compose"]
-        nginx["admin<br/>nginx + React-бандл<br/>:8080"]
+        nginx["admin<br/>nginx<br/>панель React<br/>:8080"]
         api["api<br/>Express 5<br/>:3000"]
-        worker["worker<br/>бот + поллер + сповіщення"]
+        worker["worker<br/>бот<br/>поллер О6<br/>сповіщення"]
         pg[("postgres<br/>наші дані")]
-        redis[("redis<br/>черги BullMQ")]
+        redis[("redis<br/>черги<br/>BullMQ")]
     end
 
-    syrve["Syrve Cloud API<br/>api-eu.syrve.live"]
-    tg["Telegram Bot API"]
+    syrve["Syrve<br/>Cloud API<br/>api-eu.<br/>syrve.live"]
+    tg["Telegram<br/>Bot API"]
 
     admin_user --> nginx
     nginx -->|"проксі /api"| api
@@ -30,7 +30,6 @@ flowchart TB
     worker --> pg
     worker --> redis
     worker --> syrve
-    worker --> tg
 ```
 
 | Частина | Процес | Відповідальність |
