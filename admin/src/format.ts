@@ -50,3 +50,27 @@ export const formatDate = (value: string) =>
     month: '2-digit',
     year: 'numeric',
   });
+
+/**
+ * Дата графіка приходить як YYYY-MM-DD — це вже київська доба, порахована
+ * на сервері. Беремо її як є, без new Date(): інакше браузер у іншому поясі
+ * зсунув би підпис на добу.
+ */
+const [DAY_SHORT, DAY_LONG] = [
+  new Intl.DateTimeFormat('uk-UA', { day: '2-digit', month: '2-digit' }),
+  new Intl.DateTimeFormat('uk-UA', { day: 'numeric', month: 'long' }),
+];
+
+const parseDayKey = (value: string) => {
+  const [year, month, day] = value.split('-').map(Number);
+
+  return new Date(year, month - 1, day);
+};
+
+/** 08.11 — підпис осі. */
+export const formatDayLabel = (value: string) =>
+  DAY_SHORT.format(parseDayKey(value));
+
+/** 8 листопада — підпис у підказці. */
+export const formatDayLong = (value: string) =>
+  DAY_LONG.format(parseDayKey(value));

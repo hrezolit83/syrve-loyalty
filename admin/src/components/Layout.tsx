@@ -22,6 +22,9 @@ export const Layout = ({ children }: { children: ReactNode }) => {
 
           <nav className={styles.nav}>
             <NavLink to="/" end className={navClass}>
+              Головна
+            </NavLink>
+            <NavLink to="/search" className={navClass}>
               Пошук
             </NavLink>
             <NavLink to="/guests" className={navClass}>

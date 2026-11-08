@@ -38,6 +38,13 @@ export const ADMIN_HISTORY_LIMIT = 20;
 /** Скільки гостей на сторінці списку в панелі (Д2). */
 export const GUESTS_PAGE_SIZE = 20;
 
+/**
+ * Часовий пояс закладу: у ньому рахуються «сьогодні», доба в графіку й межі
+ * періодів. Контейнери живуть у UTC, тому без цього вечірні операції
+ * потрапляли б у наступний день.
+ */
+export const REPORT_TIMEZONE = 'Europe/Kyiv';
+
 /** Межі імені гостя. */
 export const GUEST_NAME_MIN = 2;
 export const GUEST_NAME_MAX = 50;

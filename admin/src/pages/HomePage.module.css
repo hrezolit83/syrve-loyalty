@@ -1,0 +1,28 @@
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-11);
+}
+
+.title {
+  font-size: 1.35rem;
+  margin: 0;
+}
+
+/* Плитки самі вирішують, скільки їх уміститься в рядок. */
+.tiles {
+  display: grid;
+  /* 240px дає 3 колонки на типовій ширині: п'ять плиток лягають 3+2,
+     а не 4+1 із великою дірою в кінці. */
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-11);
+}
+
+.loading {
+  composes: muted from '../styles/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-7);
+}

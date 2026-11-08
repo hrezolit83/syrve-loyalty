@@ -1,0 +1,168 @@
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-9);
+}
+
+/* ---------- легенда ---------- */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-11);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-7);
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.swatchTopup {
+  background: var(--chart-topup);
+}
+
+.swatchChargeoff {
+  background: var(--chart-chargeoff);
+}
+
+/* ---------- поле графіка ---------- */
+
+.plot {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  height: 160px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* Лінія основи: стовпчики стоять на ній, а не висять у повітрі. */
+  border-bottom: 1px solid var(--border);
+}
+
+.day {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  /* Проміжок між сусідніми стовпчиками однієї доби. */
+  gap: 2px;
+  cursor: default;
+}
+
+.day:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.bar {
+  width: 45%;
+  max-width: 14px;
+  /* Заокруглений верх, низ прибитий до лінії основи. */
+  border-radius: 4px 4px 0 0;
+  transition: opacity 0.15s;
+}
+
+.barTopup {
+  background: var(--chart-topup);
+}
+
+.barChargeoff {
+  background: var(--chart-chargeoff);
+}
+
+.day:hover .bar,
+.day:focus-visible .bar {
+  opacity: 0.75;
+}
+
+/* ---------- підказка ---------- */
+
+.tooltip {
+  position: absolute;
+  /* Угорі поля графіка, а не над ним: інакше підказка вилазить за межі
+     картки й накриває заголовок. */
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  white-space: nowrap;
+  padding: var(--space-7) var(--alert-pad-x);
+  border-radius: var(--radius-sm);
+  background: var(--text);
+  color: var(--card);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+
+/* Крайні доби притискають підказку до свого краю, інакше вона
+   обрізалася б об край картки. */
+.day:first-child .tooltip {
+  left: 0;
+  transform: none;
+}
+
+.day:last-child .tooltip {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.day:hover .tooltip,
+.day:focus-visible .tooltip {
+  opacity: 1;
+}
+
+.tooltipDate {
+  display: block;
+  color: var(--border);
+}
+
+/* ---------- підписи осі ---------- */
+
+.axis {
+  display: flex;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.tick {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+  /* Підпис ширший за свою колонку — сусідні порожні, місця вистачає. */
+  overflow: visible;
+  white-space: nowrap;
+}
+
+/* Орієнтир висоти: без нього незрозуміло, один це стовпчик чи сто. */
+.scale {
+  composes: muted from '../styles/typography.module.css';
+  font-size: 0.78rem;
+}
+
+.empty {
+  composes: muted from '../styles/typography.module.css';
+}

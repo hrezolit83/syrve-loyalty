@@ -11,6 +11,7 @@ import { Layout } from './components/Layout';
 import { CenterScreen } from './components/ui/CenterScreen';
 import { Spinner } from './components/ui/Spinner';
 import { GuestPage } from './pages/GuestPage';
+import { HomePage } from './pages/HomePage';
 import { GuestsPage } from './pages/GuestsPage';
 import { LoginPage } from './pages/LoginPage';
 import { SearchPage } from './pages/SearchPage';
@@ -55,6 +56,15 @@ export const App = () => (
 
         <Route
           path="/"
+          element={
+            <Protected>
+              <HomePage />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/search"
           element={
             <Protected>
               <SearchPage />

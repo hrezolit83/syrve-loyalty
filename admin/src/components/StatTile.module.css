@@ -1,0 +1,31 @@
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.value {
+  font-size: 1.6rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.change {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* Напрямок зміни дублюється стрілкою в тексті, тому колір тут —
+   підсилення, а не єдине джерело сенсу. */
+.up {
+  color: var(--ok-text);
+}
+
+.down {
+  color: var(--fail-text);
+}

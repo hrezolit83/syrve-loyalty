@@ -70,6 +70,36 @@ const request = async <T>(
   return payload!.data;
 };
 
+/** Період для статистики (Д9) і фільтра транзакцій. */
+export type Period = 'today' | '7d' | '30d' | 'all';
+
+export type StatsTotals = {
+  guests: number;
+  newGuests: number;
+  operations: number;
+  topupSum: number;
+  chargeoffSum: number;
+};
+
+/** Зміна у відсотках проти попереднього періоду; null — порівнювати нема з чим. */
+export type StatsChanges = {
+  newGuests: number | null;
+  operations: number | null;
+  topupSum: number | null;
+  chargeoffSum: number | null;
+};
+
+export type StatsPoint = { date: string; topup: number; chargeoff: number };
+
+export type Stats = {
+  period: Period;
+  from: string | null;
+  to: string;
+  totals: StatsTotals;
+  changes: StatsChanges | null;
+  series: StatsPoint[];
+};
+
 export type Admin = { id: string; login: string };
 
 /** Рядок списку гостей (Д2) — із нашої БД, без балансу. */
@@ -136,6 +166,9 @@ export type OperationResult = {
 };
 
 export const api = {
+  /** Д9: показники головної сторінки. */
+  stats: (period: Period) => request<Stats>(`/admin/stats?period=${period}`),
+
   login: (login: string, password: string) =>
     request<{ admin: Admin }>('/auth/login', {
       method: 'POST',
