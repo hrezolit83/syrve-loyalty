@@ -1,31 +1,58 @@
-.topbar {
-  background: var(--card);
-  border-bottom: 1px solid var(--border);
+/* Каркас панелі: бокове меню ліворуч, вміст праворуч.
+   На вузькому екрані меню виїжджає поверх вмісту по кнопці-бургеру. */
+.layout {
+  min-height: 100vh;
+  display: flex;
 }
 
-.topbarInner {
-  max-width: var(--content-width);
-  margin: 0 auto;
-  padding: 0 var(--space-11);
+/* ---------- бокове меню ---------- */
+
+.sidebar {
+  flex: 0 0 240px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-13);
+  padding: var(--space-12) var(--space-11);
+  background: var(--card);
+  border-right: 1px solid var(--border);
+}
+
+.brand {
   display: flex;
   align-items: center;
-  gap: var(--space-11);
-  height: 56px;
+  gap: var(--space-7);
+  font-size: 1rem;
+  padding: 0 var(--space-7);
+}
+
+.brand svg {
+  width: 1.1em;
+  height: 1.1em;
+  flex-shrink: 0;
+  color: var(--accent);
 }
 
 .nav {
   display: flex;
+  flex-direction: column;
   gap: var(--space-3);
-  margin-left: auto;
-  margin-right: var(--space-13);
 }
 
 .navLink {
-  padding: var(--space-5) var(--control-pad-x);
+  display: flex;
+  align-items: center;
+  gap: var(--space-9);
+  padding: var(--space-7) var(--space-9);
   border-radius: var(--radius-sm);
   color: var(--muted);
   text-decoration: none;
   font-size: 0.92rem;
+}
+
+.navLink svg {
+  width: 1.1em;
+  height: 1.1em;
+  flex-shrink: 0;
 }
 
 .navLink:hover {
@@ -33,29 +60,117 @@
   color: var(--text);
 }
 
-/* Подвійний клас, щоб активне посилання не губило колір під курсором. */
+/* Подвійний клас, щоб активний пункт не блід під курсором. */
 .navLink.active {
   background: var(--bg);
   color: var(--accent);
   font-weight: 500;
 }
 
+/* ---------- верхня смуга вмісту ---------- */
+
+.content {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-9);
+  height: 56px;
+  padding: 0 var(--space-11);
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+
+.burger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.burger svg {
+  width: 20px;
+  height: 20px;
+}
+
+.burger:hover {
+  background: var(--bg);
+}
+
 .topbarRight {
   display: flex;
   align-items: center;
   gap: var(--space-9);
+  margin-left: auto;
 }
 
 .login {
   composes: muted from '../styles/typography.module.css';
 }
 
-/* Робоча область: однакові проміжки між картками сторінки. */
 .main {
+  flex: 1 1 auto;
+  width: 100%;
   max-width: var(--content-width);
   margin: 0 auto;
   padding: var(--space-13) var(--space-11) var(--space-14);
   display: flex;
   flex-direction: column;
   gap: var(--space-11);
+}
+
+/* ---------- вузький екран ---------- */
+
+@media (max-width: 860px) {
+  .burger {
+    display: inline-flex;
+  }
+
+  /* Меню лягає поверх вмісту, а не стискає його: на 420px колонка
+     в 240px не лишила б місця ні для чого. */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 20;
+    width: 240px;
+    transform: translateX(-100%);
+    /* visibility, а не лише transform: зсунуте меню інакше лишається в
+       порядку табуляції, і користувач клавіатури потрапляв би на невидимі
+       посилання. Перехід visibility відкладений, щоб не обривати анімацію. */
+    visibility: hidden;
+    transition: transform 0.2s ease, visibility 0.2s;
+  }
+
+  .sidebarOpen {
+    transform: none;
+    visibility: visible;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    border: 0;
+    padding: 0;
+    background: rgb(0 0 0 / 35%);
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition: none;
+  }
 }
