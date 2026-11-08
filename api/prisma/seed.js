@@ -10,7 +10,7 @@ import bcrypt from 'bcrypt';
 
 import { prisma } from '../src/db/prisma.js';
 import { getEnvVar } from '../src/utils/getEnvVar.js';
-import { BCRYPT_ROUNDS } from '../src/constants/index.js';
+import { ADMIN_ROLES, BCRYPT_ROUNDS } from '../src/constants/index.js';
 
 const main = async () => {
   const login = getEnvVar('ADMIN_LOGIN');
@@ -22,14 +22,19 @@ const main = async () => {
 
   const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
+  // Адміністратор із .env — завжди owner і завжди активний. Інакше можна
+  // було б випадково зачинити себе зовні: забрати собі роль у панелі й
+  // лишитися без доступу до керування адміністраторами.
   const admin = await prisma.admin.upsert({
     where: { login },
-    update: { passwordHash },
-    create: { login, passwordHash },
+    update: { passwordHash, role: ADMIN_ROLES.OWNER, isActive: true },
+    create: { login, passwordHash, role: ADMIN_ROLES.OWNER },
   });
 
   // Логін у консоль можна, пароль і хеш — ні.
-  console.log(`Адміністратора збережено: login=${admin.login}, id=${admin.id}`);
+  console.log(
+    `Адміністратора збережено: login=${admin.login}, роль=${admin.role}, id=${admin.id}`,
+  );
 };
 
 main()

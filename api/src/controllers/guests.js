@@ -1,16 +1,22 @@
 import createHttpError from 'http-errors';
 
-import { ADMIN_HISTORY_LIMIT } from '../constants/index.js';
+import {
+  ADMIN_HISTORY_LIMIT,
+  ADMIN_ROLES,
+  AUDIT_ACTIONS,
+} from '../constants/index.js';
 
 import { prisma } from '../db/prisma.js';
 import {
   applyOperation,
   getOperationsByCustomerId,
 } from '../services/operations.js';
+import { requestIp, writeAuditLog } from '../services/audit.js';
 import { getGuestList } from '../services/guestList.js';
 import { getGuestSyrveHistory } from '../services/history.js';
 import { getSyrveClient } from '../services/syrve/index.js';
 import { formatAmount } from '../templates/messages.js';
+import { getEnvVar } from '../utils/getEnvVar.js';
 import { logger } from '../utils/logger.js';
 import { formatPhone } from '../utils/phone.js';
 import { classifySearchTerm } from '../utils/searchTerm.js';
@@ -109,6 +115,19 @@ export const getGuestsController = async (req, res) => {
   res.json({ status: 200, message: 'ok', data: result });
 };
 
+/**
+ * Межа однієї операції для цього адміністратора.
+ *
+ * Власник працює без межі, менеджер — у рамках ADMIN_MANAGER_LIMIT.
+ * Перевірка саме на сервері: панель ховає й підказує, але нічого не
+ * забороняє — запит можна надіслати повз неї.
+ */
+const resolveAmountLimit = (admin) => {
+  if (admin.role === ADMIN_ROLES.OWNER) return null;
+
+  return Number(getEnvVar('ADMIN_MANAGER_LIMIT', '500'));
+};
+
 const operationController = (type) => async (req, res) => {
   const { customerId } = req.params;
   const { amount, reason } = req.body;
@@ -118,12 +137,49 @@ const operationController = (type) => async (req, res) => {
     'Запит на операцію з бонусами',
   );
 
-  const result = await applyOperation({
-    type,
-    adminId: req.admin.id,
-    syrveCustomerId: customerId,
-    amount,
-    reason,
+  const auditAction =
+    type === 'topup'
+      ? AUDIT_ACTIONS.OPERATION_TOPUP
+      : AUDIT_ACTIONS.OPERATION_CHARGEOFF;
+
+  let result;
+
+  try {
+    result = await applyOperation({
+      type,
+      adminId: req.admin.id,
+      syrveCustomerId: customerId,
+      amount,
+      reason,
+      amountLimit: resolveAmountLimit(req.admin),
+    });
+  } catch (error) {
+    // Відмова теж іде в журнал дій: спроба списати понад ліміт або понад
+    // баланс — саме те, заради чого журнал і ведеться.
+    await writeAuditLog({
+      admin: req.admin,
+      action: auditAction,
+      targetType: 'guest',
+      targetId: customerId,
+      details: { amount, reason, status: 'failed', error: error.message },
+      ip: requestIp(req),
+    });
+
+    throw error;
+  }
+
+  await writeAuditLog({
+    admin: req.admin,
+    action: auditAction,
+    targetType: 'guest',
+    targetId: customerId,
+    details: {
+      amount,
+      reason,
+      status: 'success',
+      balance: result.balance,
+    },
+    ip: requestIp(req),
   });
 
   res.json({

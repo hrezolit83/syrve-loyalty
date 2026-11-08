@@ -6,7 +6,10 @@ import {
   logoutController,
   meController,
 } from '../controllers/auth.js';
-import { authenticate } from '../middlewares/authenticate.js';
+import {
+  attachAdminIfPossible,
+  authenticate,
+} from '../middlewares/authenticate.js';
 import { rateLimit } from '../middlewares/rateLimit.js';
 import { validateBody } from '../middlewares/validateBody.js';
 import { ctrlWrapper } from '../utils/ctrlWrapper.js';
@@ -22,7 +25,11 @@ router.post(
   ctrlWrapper(loginController),
 );
 
-router.post('/logout', ctrlWrapper(logoutController));
+router.post(
+  '/logout',
+  ctrlWrapper(attachAdminIfPossible),
+  ctrlWrapper(logoutController),
+);
 
 router.get('/me', ctrlWrapper(authenticate), ctrlWrapper(meController));
 

@@ -91,6 +91,8 @@ export const applyOperation = async ({
   syrveCustomerId,
   amount,
   reason,
+  /** Межа однієї операції для цього адміністратора; null — без межі. */
+  amountLimit = null,
 }) => {
   const client = getSyrveClient();
 
@@ -111,6 +113,19 @@ export const applyOperation = async ({
       error: message,
     });
   };
+
+  // Ліміт перевіряємо до будь-яких запитів у Syrve, але після того, як
+  // стало куди писати відмову: перевищення межі теж має лишитися в
+  // журналі гостя, інакше в історії буде дірка.
+  if (amountLimit !== null && amount > amountLimit) {
+    const message = `Перевищено ліміт на одну операцію: ${formatAmount(
+      amountLimit,
+    )} бонусів`;
+
+    await logFailure(message);
+
+    throw createHttpError(403, message);
+  }
 
   let result;
 

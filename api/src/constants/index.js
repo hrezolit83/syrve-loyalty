@@ -58,6 +58,35 @@ export const REPORT_TIMEZONE = 'Europe/Kyiv';
 export const GUEST_NAME_MIN = 2;
 export const GUEST_NAME_MAX = 50;
 
+/** Ролі адміністраторів. Збігаються зі значеннями enum AdminRole у Prisma. */
+export const ADMIN_ROLES = {
+  OWNER: 'owner',
+  MANAGER: 'manager',
+};
+
+/**
+ * Дії, які потрапляють у журнал (Д10).
+ *
+ * Рядкові коди, а не enum у БД: новий тип дії не має вимагати міграції,
+ * а старі записи мусять лишатися читабельними, навіть якщо дію прибрали
+ * з коду. Підписи українською живуть у панелі.
+ */
+export const AUDIT_ACTIONS = {
+  LOGIN: 'auth.login',
+  LOGIN_FAILED: 'auth.login_failed',
+  LOGOUT: 'auth.logout',
+  OPERATION_TOPUP: 'operation.topup',
+  OPERATION_CHARGEOFF: 'operation.chargeoff',
+  ADMIN_CREATE: 'admin.create',
+  ADMIN_UPDATE: 'admin.update',
+  ADMIN_DEACTIVATE: 'admin.deactivate',
+  ADMIN_PASSWORD_RESET: 'admin.password_reset',
+  TRANSACTIONS_EXPORT: 'transactions.export',
+};
+
+/** Скільки записів журналу дій на сторінці. */
+export const AUDIT_PAGE_SIZE = 20;
+
 /** Cookie з JWT адміністратора. httpOnly, тому JS на сторінці його не бачить. */
 export const AUTH_COOKIE = 'syrve_loyalty_token';
 

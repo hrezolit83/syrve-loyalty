@@ -32,6 +32,13 @@ export const loginAdmin = async ({ login, password }) => {
 
   if (!isEqual) throw invalid;
 
+  // Деактивованого не пускаємо. Текст інший, ніж у «невірний логін або
+  // пароль»: тут уже доведено, що це свій, і приховувати нема чого —
+  // людині треба зрозуміти, що річ не в паролі.
+  if (!admin.isActive) {
+    throw createHttpError(403, 'Доступ вимкнено. Зверніться до власника.');
+  }
+
   const token = jwt.sign(
     { sub: admin.id, login: admin.login },
     getEnvVar('JWT_SECRET'),
@@ -40,7 +47,7 @@ export const loginAdmin = async ({ login, password }) => {
 
   return {
     token,
-    admin: { id: admin.id, login: admin.login },
+    admin: { id: admin.id, login: admin.login, role: admin.role },
   };
 };
 
@@ -55,5 +62,11 @@ export const verifyToken = (token) => {
 export const findAdminById = async (id) =>
   prisma.admin.findUnique({
     where: { id },
-    select: { id: true, login: true, createdAt: true },
+    select: {
+      id: true,
+      login: true,
+      role: true,
+      isActive: true,
+      createdAt: true,
+    },
   });

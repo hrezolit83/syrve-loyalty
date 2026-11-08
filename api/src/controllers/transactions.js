@@ -1,7 +1,9 @@
 import {
+  AUDIT_ACTIONS,
   REPORT_TIMEZONE,
   TRANSACTIONS_EXPORT_LIMIT,
 } from '../constants/index.js';
+import { requestIp, writeAuditLog } from '../services/audit.js';
 import {
   getTransactions,
   getTransactionsForExport,
@@ -71,6 +73,15 @@ export const exportTransactionsController = async (req, res) => {
       row.typeName ?? row.type ?? '',
     ]),
   );
+
+  // Вивантаження даних гостей — дія, яку має бути видно в журналі.
+  await writeAuditLog({
+    admin: req.admin,
+    action: AUDIT_ACTIONS.TRANSACTIONS_EXPORT,
+    targetType: 'transactions',
+    details: { ...req.validatedQuery, rows: rows.length },
+    ip: requestIp(req),
+  });
 
   const stamp = new Date().toISOString().slice(0, 10);
 

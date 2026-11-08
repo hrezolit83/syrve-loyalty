@@ -20,6 +20,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// Ролі адміністраторів панелі.
+/// owner — власник закладу: усі дії без обмежень, керує адміністраторами.
+/// manager — працівник: щоденна робота, але з лімітом на суму операції
+/// і без доступу до адміністраторів та журналу дій.
+enum AdminRole {
+  owner
+  manager
+}
+
 enum OperationType {
   topup
   chargeoff
@@ -30,16 +39,56 @@ enum OperationStatus {
   failed
 }
 
-/// Адміністратор панелі. Створюється сід-скриптом із .env.
+/// Адміністратор панелі. Першого створює сід-скрипт із .env — він owner.
 model Admin {
-  id           String   @id @default(uuid()) @db.Uuid
-  login        String   @unique @db.VarChar(64)
-  passwordHash String   @map("password_hash")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id           String    @id @default(uuid()) @db.Uuid
+  login        String    @unique @db.VarChar(64)
+  passwordHash String    @map("password_hash")
+  role         AdminRole @default(manager)
+  /// Деактивація замість видалення: журнал операцій і журнал дій мають
+  /// лишатися читабельними, а для цього автор запису має існувати.
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  // @default потрібен для вже наявних рядків: без нього міграція не
+  // проходить на базі, де адміністратор уже створений.
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
 
   operations Operation[]
+  auditLogs  AuditLog[]
 
   @@map("admins")
+}
+
+/// Журнал дій адміністраторів (Д10).
+///
+/// Пишеться з коду й НЕ має жодного API на зміну чи видалення: сенс
+/// журналу саме в тому, що запис не можна прибрати заднім числом.
+model AuditLog {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// NULL буває у невдалого входу: логін ввели, а такого адміна немає.
+  adminId String? @map("admin_id") @db.Uuid
+  /// Логін дублюється текстом навмисно: запис має лишатися читабельним
+  /// і тоді, коли адміністратора вже немає.
+  adminLogin String @map("admin_login") @db.VarChar(64)
+
+  action     String  @db.VarChar(64)
+  /// Над чим дія: guest, admin, transactions.
+  targetType String? @map("target_type") @db.VarChar(32)
+  targetId   String? @map("target_id") @db.VarChar(64)
+  /// Подробиці дії: сума, причина, результат, фільтри експорту.
+  details    Json?
+  ip         String? @db.VarChar(64)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  /// SetNull, а не Cascade: видалення адміністратора не має стирати слідів.
+  admin Admin? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([adminId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
 }
 
 /// Гість: зв'язок Telegram-акаунта з гостем у Syrve Loyalty.
