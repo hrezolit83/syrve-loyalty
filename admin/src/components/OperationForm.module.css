@@ -1,0 +1,20 @@
+.radioRow {
+  display: flex;
+  gap: var(--space-12);
+  margin-bottom: var(--space-11);
+}
+
+.radio {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-6);
+  color: var(--text);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.radio input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}

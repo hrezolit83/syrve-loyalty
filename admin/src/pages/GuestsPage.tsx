@@ -3,6 +3,14 @@ import { Link } from 'react-router-dom';
 
 import { ApiError, api, type GuestListItem } from '../api';
 import { formatDateTime } from '../format';
+import { Alert } from '../components/ui/Alert';
+import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
+import { Card, CardForm, CardTitle } from '../components/ui/Card';
+import { Field } from '../components/ui/Field';
+import { FormRow } from '../components/ui/FormRow';
+import { Table, Td, Th, Tr } from '../components/ui/Table';
+import styles from './GuestsPage.module.css';
 
 /**
  * Д2: список гостей, зареєстрованих через бот.
@@ -82,33 +90,43 @@ export const GuestsPage = () => {
   const sortMark = (column: Sort) =>
     sort === column ? (order === 'asc' ? ' ▲' : ' ▼') : '';
 
+  const sortHeader = (column: Sort) => (
+    <button
+      type="button"
+      className={styles.sortButton}
+      onClick={() => toggleSort(column)}
+    >
+      {SORT_LABELS[column]}
+      {sortMark(column)}
+    </button>
+  );
+
   return (
-    <div className="stack">
-      <form className="card" onSubmit={handleSearch}>
-        <h2>Гості</h2>
-        <p className="muted">
+    <>
+      <CardForm onSubmit={handleSearch}>
+        <CardTitle>Гості</CardTitle>
+        <p className={styles.total}>
           Усі гості, зареєстровані через Telegram-бот: {total}
         </p>
 
-        <div className="form-row">
-          <label className="grow">
-            Пошук за іменем, телефоном або номером картки
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Наприклад: Олена або 067"
-            />
-          </label>
+        <FormRow>
+          <Field
+            grow
+            label="Пошук за іменем, телефоном або номером картки"
+            type="text"
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            placeholder="Наприклад: Олена або 067"
+          />
 
-          <button type="submit" className="align-end" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading}>
             {isLoading ? 'Шукаємо…' : 'Знайти'}
-          </button>
+          </Button>
 
           {search && (
-            <button
+            <Button
               type="button"
-              className="align-end secondary"
+              variant="secondary"
               onClick={() => {
                 setSearchInput('');
                 setSearch('');
@@ -116,105 +134,90 @@ export const GuestsPage = () => {
               }}
             >
               Скинути
-            </button>
+            </Button>
           )}
-        </div>
+        </FormRow>
 
-        {error && <div className="alert alert-error">{error}</div>}
-      </form>
+        {error && <Alert>{error}</Alert>}
+      </CardForm>
 
-      <div className="card">
+      <Card>
         {items.length === 0 ? (
-          <p className="muted">
+          <p className={styles.empty}>
             {search
               ? 'За цим запитом гостей не знайдено.'
               : 'Поки що жоден гість не зареєструвався через бота.'}
           </p>
         ) : (
           <>
-            <table>
+            <Table>
               <thead>
-                <tr>
-                  <th>
-                    <button
-                      type="button"
-                      className="th-sort"
-                      onClick={() => toggleSort('name')}
-                    >
-                      {SORT_LABELS.name}
-                      {sortMark('name')}
-                    </button>
-                  </th>
-                  <th>Телефон</th>
-                  <th>Картка</th>
-                  <th>
-                    <button
-                      type="button"
-                      className="th-sort"
-                      onClick={() => toggleSort('createdAt')}
-                    >
-                      {SORT_LABELS.createdAt}
-                      {sortMark('createdAt')}
-                    </button>
-                  </th>
-                  <th>Telegram</th>
-                </tr>
+                <Tr>
+                  <Th>{sortHeader('name')}</Th>
+                  <Th>Телефон</Th>
+                  <Th>Картка</Th>
+                  <Th>{sortHeader('createdAt')}</Th>
+                  <Th>Telegram</Th>
+                </Tr>
               </thead>
               <tbody>
                 {items.map((guest) => (
-                  <tr key={guest.id}>
-                    <td>
+                  <Tr key={guest.id}>
+                    <Td>
                       {guest.customerId ? (
-                        <Link to={`/guests/${guest.customerId}`}>
+                        <Link
+                          to={`/guests/${guest.customerId}`}
+                          className={styles.guestLink}
+                        >
                           {guest.name ?? 'Без імені'}
                         </Link>
                       ) : (
                         (guest.name ?? 'Без імені')
                       )}
-                    </td>
-                    <td className="nowrap">{guest.phoneFormatted}</td>
-                    <td className="nowrap">{guest.cardNumber ?? '—'}</td>
-                    <td className="nowrap">{formatDateTime(guest.createdAt)}</td>
-                    <td>
+                    </Td>
+                    <Td nowrap>{guest.phoneFormatted}</Td>
+                    <Td nowrap>{guest.cardNumber ?? '—'}</Td>
+                    <Td nowrap>{formatDateTime(guest.createdAt)}</Td>
+                    <Td>
                       {guest.botBlocked ? (
-                        <span className="badge badge-fail">заблокував бота</span>
+                        <Badge status="fail">заблокував бота</Badge>
                       ) : (
-                        <span className="badge badge-ok">активний</span>
+                        <Badge status="ok">активний</Badge>
                       )}
-                    </td>
-                  </tr>
+                    </Td>
+                  </Tr>
                 ))}
               </tbody>
-            </table>
+            </Table>
 
             {totalPages > 1 && (
-              <div className="pagination">
-                <button
+              <div className={styles.pagination}>
+                <Button
                   type="button"
-                  className="secondary"
+                  variant="secondary"
                   onClick={() => setPage(page - 1)}
                   disabled={page <= 1 || isLoading}
                 >
                   ← Назад
-                </button>
+                </Button>
 
-                <span className="muted">
+                <span className={styles.pageCounter}>
                   Сторінка {page} з {totalPages}
                 </span>
 
-                <button
+                <Button
                   type="button"
-                  className="secondary"
+                  variant="secondary"
                   onClick={() => setPage(page + 1)}
                   disabled={page >= totalPages || isLoading}
                 >
                   Далі →
-                </button>
+                </Button>
               </div>
             )}
           </>
         )}
-      </div>
-    </div>
+      </Card>
+    </>
   );
 };

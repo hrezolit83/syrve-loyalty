@@ -1,5 +1,9 @@
 import type { Operation } from '../api';
 import { formatAmount, formatDateTime } from '../format';
+import { Badge } from './ui/Badge';
+import { Card, CardTitle } from './ui/Card';
+import { Table, Td, Th, Tr } from './ui/Table';
+import styles from './OperationsTable.module.css';
 
 const TYPE_LABELS: Record<Operation['type'], string> = {
   topup: 'Нарахування',
@@ -14,55 +18,52 @@ export const OperationsTable = ({
 }) => {
   if (operations.length === 0) {
     return (
-      <div className="card">
-        <h2>Історія операцій</h2>
-        <p className="muted">Операцій ще не було.</p>
-      </div>
+      <Card>
+        <CardTitle>Історія операцій</CardTitle>
+        <p className={styles.empty}>Операцій ще не було.</p>
+      </Card>
     );
   }
 
   return (
-    <div className="card">
-      <h2>Історія операцій</h2>
+    <Card>
+      <CardTitle>Історія операцій</CardTitle>
 
-      <table>
+      <Table>
         <thead>
-          <tr>
-            <th>Коли</th>
-            <th>Тип</th>
-            <th className="right">Сума</th>
-            <th>Причина</th>
-            <th>Адміністратор</th>
-            <th>Результат</th>
-          </tr>
+          <Tr>
+            <Th>Коли</Th>
+            <Th>Тип</Th>
+            <Th right>Сума</Th>
+            <Th>Причина</Th>
+            <Th>Адміністратор</Th>
+            <Th>Результат</Th>
+          </Tr>
         </thead>
         <tbody>
           {operations.map((operation) => (
-            <tr
-              key={operation.id}
-              className={operation.status === 'failed' ? 'row-failed' : ''}
-            >
-              <td className="nowrap">{formatDateTime(operation.createdAt)}</td>
-              <td>{TYPE_LABELS[operation.type]}</td>
-              <td className="right nowrap">
+            <Tr key={operation.id} dimmed={operation.status === 'failed'}>
+              <Td nowrap>{formatDateTime(operation.createdAt)}</Td>
+              <Td>{TYPE_LABELS[operation.type]}</Td>
+              <Td right nowrap>
                 {operation.type === 'topup' ? '+' : '−'}
                 {formatAmount(operation.amount)}
-              </td>
-              <td>{operation.reason}</td>
-              <td>{operation.adminLogin}</td>
-              <td>
+              </Td>
+              <Td>{operation.reason}</Td>
+              <Td>{operation.adminLogin}</Td>
+              <Td>
                 {operation.status === 'success' ? (
-                  <span className="badge badge-ok">виконано</span>
+                  <Badge status="ok">виконано</Badge>
                 ) : (
-                  <span className="badge badge-fail" title={operation.error ?? ''}>
+                  <Badge status="fail" title={operation.error ?? ''}>
                     відмова
-                  </span>
+                  </Badge>
                 )}
-              </td>
-            </tr>
+              </Td>
+            </Tr>
           ))}
         </tbody>
-      </table>
-    </div>
+      </Table>
+    </Card>
   );
 };

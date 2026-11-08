@@ -1,0 +1,12 @@
+.row {
+  display: flex;
+  gap: var(--space-9);
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+/* Кнопки в рядку форми стоять на одній лінії з полями, а не над ними:
+   у поля зверху ще є підпис, тому вирівнюємо по нижньому краю. */
+.row button {
+  align-self: flex-end;
+}

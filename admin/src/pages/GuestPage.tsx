@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 
 import { ApiError, api, type Guest } from '../api';
 import { GuestDetails } from '../components/GuestDetails';
+import { Alert } from '../components/ui/Alert';
+import styles from './GuestPage.module.css';
 
 /**
  * Картка гостя за посиланням зі списку (Д2).
@@ -38,16 +40,16 @@ export const GuestPage = () => {
   }, [load]);
 
   return (
-    <div className="stack">
-      <Link to="/guests" className="back-link">
+    <>
+      <Link to="/guests" className={styles.backLink}>
         ← До списку гостей
       </Link>
 
-      {isLoading && <p className="muted">Завантаження…</p>}
+      {isLoading && <p className={styles.loading}>Завантаження…</p>}
 
-      {error && <div className="alert alert-error">{error}</div>}
+      {error && <Alert>{error}</Alert>}
 
       {guest && <GuestDetails guest={guest} onReload={load} />}
-    </div>
+    </>
   );
 };

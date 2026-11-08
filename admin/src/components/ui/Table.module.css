@@ -1,0 +1,52 @@
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.cell {
+  text-align: left;
+  padding: var(--space-7) var(--space-8);
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.head {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Модифікатори комірок лежать тут, а не в модулях таблиць: інакше
+   вони змагалися б за вагу з .cell, і результат залежав би від
+   порядку імпорту файлів. */
+.right {
+  text-align: right;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* Останній рядок без лінії — її роль виконує край картки. */
+.table tbody tr:last-child .cell {
+  border-bottom: 0;
+}
+
+/* Рядок невдалої операції приглушений, але лишається читабельним. */
+.dimmed .cell {
+  color: var(--muted);
+}
+
+@media (max-width: 600px) {
+  .table {
+    font-size: 0.8rem;
+  }
+}

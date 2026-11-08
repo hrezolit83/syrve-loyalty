@@ -2,7 +2,13 @@ import { useState, type FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { ApiError } from '../api';
+import { Alert } from '../components/ui/Alert';
+import { Button } from '../components/ui/Button';
+import { CardForm } from '../components/ui/Card';
+import { CenterScreen } from '../components/ui/CenterScreen';
+import { Field } from '../components/ui/Field';
 import { useAuth } from '../useAuth';
+import styles from './LoginPage.module.css';
 
 export const LoginPage = () => {
   const { admin, login } = useAuth();
@@ -30,40 +36,36 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="center-screen">
-      <form className="card login-card" onSubmit={handleSubmit}>
-        <h1>Вхід у панель</h1>
-        <p className="muted">Сервіс лояльності</p>
+    <CenterScreen>
+      <CardForm className={styles.form} onSubmit={handleSubmit}>
+        <h1 className={styles.title}>Вхід у панель</h1>
+        <p className={styles.subtitle}>Сервіс лояльності</p>
 
-        <label>
-          Логін
-          <input
-            type="text"
-            value={loginValue}
-            onChange={(event) => setLoginValue(event.target.value)}
-            autoComplete="username"
-            autoFocus
-            required
-          />
-        </label>
+        <Field
+          label="Логін"
+          type="text"
+          value={loginValue}
+          onChange={(event) => setLoginValue(event.target.value)}
+          autoComplete="username"
+          autoFocus
+          required
+        />
 
-        <label>
-          Пароль
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            autoComplete="current-password"
-            required
-          />
-        </label>
+        <Field
+          label="Пароль"
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          autoComplete="current-password"
+          required
+        />
 
-        {error && <div className="alert alert-error">{error}</div>}
+        {error && <Alert>{error}</Alert>}
 
-        <button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Входимо…' : 'Увійти'}
-        </button>
-      </form>
-    </div>
+        </Button>
+      </CardForm>
+    </CenterScreen>
   );
 };

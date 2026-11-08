@@ -1,0 +1,13 @@
+.backLink {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.loading {
+  composes: muted from '../styles/typography.module.css';
+}

@@ -1,0 +1,15 @@
+.alert {
+  padding: var(--space-8) var(--alert-pad-x);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+}
+
+.error {
+  background: var(--fail-bg);
+  color: var(--fail-text);
+}
+
+.success {
+  background: var(--ok-bg);
+  color: var(--ok-text);
+}

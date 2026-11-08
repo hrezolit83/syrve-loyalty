@@ -1,6 +1,5 @@
 import {
   Navigate,
-  NavLink,
   Route,
   BrowserRouter as Router,
   Routes,
@@ -8,11 +7,14 @@ import {
 import type { ReactNode } from 'react';
 
 import { AuthProvider } from './auth';
+import { Layout } from './components/Layout';
+import { CenterScreen } from './components/ui/CenterScreen';
 import { GuestPage } from './pages/GuestPage';
 import { GuestsPage } from './pages/GuestsPage';
 import { LoginPage } from './pages/LoginPage';
 import { SearchPage } from './pages/SearchPage';
 import { useAuth } from './useAuth';
+import styles from './App.module.css';
 
 /**
  * Без входу всі сторінки ведуть на /login.
@@ -24,41 +26,12 @@ import { useAuth } from './useAuth';
 const RequireAuth = ({ children }: { children: ReactNode }) => {
   const { admin, isLoading } = useAuth();
 
-  if (isLoading) return <div className="center-screen muted">Завантаження…</div>;
+  if (isLoading)
+    return <CenterScreen className={styles.loading}>Завантаження…</CenterScreen>;
 
   if (!admin) return <Navigate to="/login" replace />;
 
   return <>{children}</>;
-};
-
-const Layout = ({ children }: { children: ReactNode }) => {
-  const { admin, logout } = useAuth();
-
-  return (
-    <>
-      <header className="topbar">
-        <div className="topbar-inner">
-          <strong>Сервіс лояльності</strong>
-
-          <nav className="nav">
-            <NavLink to="/" end>
-              Пошук
-            </NavLink>
-            <NavLink to="/guests">Гості</NavLink>
-          </nav>
-
-          <div className="topbar-right">
-            <span className="muted">{admin?.login}</span>
-            <button type="button" className="link" onClick={() => logout()}>
-              Вийти
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="container">{children}</main>
-    </>
-  );
 };
 
 /** Сторінки під автентифікацією мають однакову обгортку. */

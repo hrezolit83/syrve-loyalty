@@ -2,6 +2,11 @@ import { useCallback, useState, type FormEvent } from 'react';
 
 import { ApiError, api, type Guest } from '../api';
 import { GuestDetails } from '../components/GuestDetails';
+import { Alert } from '../components/ui/Alert';
+import { Button } from '../components/ui/Button';
+import { CardForm, CardTitle } from '../components/ui/Card';
+import { Field } from '../components/ui/Field';
+import { FormRow } from '../components/ui/FormRow';
 
 /**
  * Пошук гостя за телефоном (О4).
@@ -47,32 +52,31 @@ export const SearchPage = () => {
   }, [guest, loadGuest]);
 
   return (
-    <div className="stack">
-      <form className="card" onSubmit={handleSearch}>
-        <h2>Пошук гостя за телефоном</h2>
+    <>
+      <CardForm onSubmit={handleSearch}>
+        <CardTitle>Пошук гостя за телефоном</CardTitle>
 
-        <div className="form-row">
-          <label className="grow">
-            Телефон
-            <input
-              type="tel"
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-              placeholder="+380XXXXXXXXX або 0XXXXXXXXX"
-              autoFocus
-              required
-            />
-          </label>
+        <FormRow>
+          <Field
+            grow
+            label="Телефон"
+            type="tel"
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+            placeholder="+380XXXXXXXXX або 0XXXXXXXXX"
+            autoFocus
+            required
+          />
 
-          <button type="submit" disabled={isSearching} className="align-end">
+          <Button type="submit" disabled={isSearching}>
             {isSearching ? 'Шукаємо…' : 'Знайти'}
-          </button>
-        </div>
+          </Button>
+        </FormRow>
 
-        {error && <div className="alert alert-error">{error}</div>}
-      </form>
+        {error && <Alert>{error}</Alert>}
+      </CardForm>
 
       {guest && <GuestDetails guest={guest} onReload={refresh} />}
-    </div>
+    </>
   );
 };

@@ -7,10 +7,15 @@ import {
   type Operation,
   type SyrveOperation,
 } from '../api';
+import { cx } from '../cx';
 import { formatAmount, formatDate } from '../format';
 import { OperationForm } from './OperationForm';
 import { OperationsTable } from './OperationsTable';
 import { SyrveOperationsTable } from './SyrveOperationsTable';
+import { Alert } from './ui/Alert';
+import { Badge } from './ui/Badge';
+import { Card, CardTitle } from './ui/Card';
+import styles from './GuestDetails.module.css';
 
 /**
  * Картка гостя: дані, форма нарахування/списання і два журнали.
@@ -65,57 +70,57 @@ export const GuestDetails = ({
 
   return (
     <>
-      <div className="card">
-        <h2>{guest.name ?? 'Без імені'}</h2>
+      <Card>
+        <CardTitle>{guest.name ?? 'Без імені'}</CardTitle>
 
-        <dl className="details">
+        <dl className={styles.details}>
           <div>
-            <dt>Телефон</dt>
-            <dd>{guest.phoneFormatted}</dd>
+            <dt className={styles.term}>Телефон</dt>
+            <dd className={styles.value}>{guest.phoneFormatted}</dd>
           </div>
           <div>
-            <dt>Картка</dt>
-            <dd>{guest.cardNumber ?? '—'}</dd>
+            <dt className={styles.term}>Картка</dt>
+            <dd className={styles.value}>{guest.cardNumber ?? '—'}</dd>
           </div>
           <div>
-            <dt>Баланс</dt>
-            <dd className="balance">{formatAmount(guest.balance)}</dd>
+            <dt className={styles.term}>Баланс</dt>
+            <dd className={cx(styles.value, styles.balance)}>
+              {formatAmount(guest.balance)}
+            </dd>
           </div>
           <div>
-            <dt>Telegram</dt>
-            <dd>
+            <dt className={styles.term}>Telegram</dt>
+            <dd className={styles.value}>
               {guest.registeredViaBot ? (
-                <span className="badge badge-ok">підключений</span>
+                <Badge status="ok">підключений</Badge>
               ) : (
-                <span className="badge">немає</span>
+                <Badge>немає</Badge>
               )}
             </dd>
           </div>
           {guest.registeredAt && (
             <div>
-              <dt>Реєстрація</dt>
-              <dd>{formatDate(guest.registeredAt)}</dd>
+              <dt className={styles.term}>Реєстрація</dt>
+              <dd className={styles.value}>{formatDate(guest.registeredAt)}</dd>
             </div>
           )}
         </dl>
 
         {!guest.registeredViaBot && (
-          <p className="muted">
+          <p className={styles.note}>
             Гість не реєструвався через бота — сповіщення в Telegram він не
             отримає.
           </p>
         )}
 
         {guest.botBlocked && (
-          <div className="alert alert-error">
-            Гість заблокував бота — сповіщення йому не надсилаються.
-          </div>
+          <Alert>Гість заблокував бота — сповіщення йому не надсилаються.</Alert>
         )}
-      </div>
+      </Card>
 
       <OperationForm guest={guest} onDone={handleOperationDone} />
 
-      {error && <div className="alert alert-error">{error}</div>}
+      {error && <Alert>{error}</Alert>}
 
       <OperationsTable operations={operations} />
 

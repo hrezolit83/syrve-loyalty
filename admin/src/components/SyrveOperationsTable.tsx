@@ -1,5 +1,8 @@
 import type { SyrveOperation } from '../api';
 import { formatAmount, formatDateTime, formatSigned } from '../format';
+import { Card, CardTitle } from './ui/Card';
+import { Table, Td, Th, Tr } from './ui/Table';
+import styles from './SyrveOperationsTable.module.css';
 
 /**
  * Д1: усі зміни балансу гостя з боку Syrve — нарахування на касі, правки з
@@ -15,54 +18,56 @@ export const SyrveOperationsTable = ({
 }: {
   operations: SyrveOperation[];
 }) => (
-  <div className="card">
-    <h2>Операції в Syrve</h2>
-    <p className="muted">
+  <Card>
+    <CardTitle>Операції в Syrve</CardTitle>
+    <p className={styles.hint}>
       Усі зміни балансу за гаманцем програми — зокрема з каси й кабінету
       Syrve Loyalty.
     </p>
 
     {operations.length === 0 ? (
-      <p className="muted">Операцій за цим гаманцем ще не було.</p>
+      <p className={styles.empty}>Операцій за цим гаманцем ще не було.</p>
     ) : (
-      <table>
+      <Table>
         <thead>
-          <tr>
-            <th>Коли</th>
-            <th className="right">Сума</th>
-            <th className="right">Баланс після</th>
-            <th>Коментар</th>
-            <th>Тип у Syrve</th>
-          </tr>
+          <Tr>
+            <Th>Коли</Th>
+            <Th right>Сума</Th>
+            <Th right>Баланс після</Th>
+            <Th>Коментар</Th>
+            <Th>Тип у Syrve</Th>
+          </Tr>
         </thead>
         <tbody>
           {operations.map((operation) => (
-            <tr key={operation.id}>
-              <td className="nowrap">
+            <Tr key={operation.id}>
+              <Td nowrap>
                 {operation.whenCreated
                   ? formatDateTime(operation.whenCreated)
                   : '—'}
-              </td>
-              <td
-                className={`right nowrap ${
-                  operation.sum < 0 ? 'amount-minus' : 'amount-plus'
-                }`}
+              </Td>
+              <Td
+                right
+                nowrap
+                className={
+                  operation.sum < 0 ? styles.amountMinus : styles.amountPlus
+                }
               >
                 {formatSigned(operation.sum)}
-              </td>
-              <td className="right nowrap">
+              </Td>
+              <Td right nowrap>
                 {operation.balanceAfter === null
                   ? '—'
                   : formatAmount(operation.balanceAfter)}
-              </td>
-              <td>{operation.comment ?? '—'}</td>
-              <td className="muted nowrap">
+              </Td>
+              <Td>{operation.comment ?? '—'}</Td>
+              <Td muted nowrap>
                 {operation.typeName ?? operation.type ?? '—'}
-              </td>
-            </tr>
+              </Td>
+            </Tr>
           ))}
         </tbody>
-      </table>
+      </Table>
     )}
-  </div>
+  </Card>
 );

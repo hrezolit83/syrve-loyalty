@@ -1,0 +1,13 @@
+.hint,
+.empty {
+  composes: muted from '../styles/typography.module.css';
+}
+
+/* Знак суми дублюється кольором: плюс — зелений, мінус — червоний. */
+.amountPlus {
+  color: var(--ok-text);
+}
+
+.amountMinus {
+  color: var(--fail-text);
+}

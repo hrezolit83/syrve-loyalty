@@ -1,0 +1,61 @@
+.topbar {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbarInner {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 0 var(--space-11);
+  display: flex;
+  align-items: center;
+  gap: var(--space-11);
+  height: 56px;
+}
+
+.nav {
+  display: flex;
+  gap: var(--space-3);
+  margin-left: auto;
+  margin-right: var(--space-13);
+}
+
+.navLink {
+  padding: var(--space-5) var(--control-pad-x);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.92rem;
+}
+
+.navLink:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Подвійний клас, щоб активне посилання не губило колір під курсором. */
+.navLink.active {
+  background: var(--bg);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.topbarRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-9);
+}
+
+.login {
+  composes: muted from '../styles/typography.module.css';
+}
+
+/* Робоча область: однакові проміжки між картками сторінки. */
+.main {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: var(--space-13) var(--space-11) var(--space-14);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-11);
+}

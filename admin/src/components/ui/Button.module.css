@@ -1,0 +1,34 @@
+.button {
+  font: inherit;
+  font-weight: 500;
+  padding: var(--control-pad-y) var(--button-pad-x);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-text);
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* Варіанти йдуть після базового класу: у межах одного файла порядок
+   правил визначений, тож перевизначення працює без боротьби за вагу. */
+.secondary {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.secondary:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.link {
+  background: none;
+  color: var(--accent);
+  padding: var(--space-3);
+}

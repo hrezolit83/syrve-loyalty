@@ -2,6 +2,12 @@ import { useState, type FormEvent } from 'react';
 
 import { ApiError, api, type Guest } from '../api';
 import { formatAmount } from '../format';
+import { Alert } from './ui/Alert';
+import { Button } from './ui/Button';
+import { CardForm, CardTitle } from './ui/Card';
+import { Field } from './ui/Field';
+import { FormRow } from './ui/FormRow';
+import styles from './OperationForm.module.css';
 
 type Props = {
   guest: Guest;
@@ -96,11 +102,11 @@ export const OperationForm = ({ guest, onDone }: Props) => {
   };
 
   return (
-    <form className="card" onSubmit={handleSubmit}>
-      <h2>Нарахування та списання</h2>
+    <CardForm onSubmit={handleSubmit}>
+      <CardTitle>Нарахування та списання</CardTitle>
 
-      <div className="radio-row">
-        <label className="radio">
+      <div className={styles.radioRow}>
+        <label className={styles.radio}>
           <input
             type="radio"
             name="type"
@@ -112,7 +118,7 @@ export const OperationForm = ({ guest, onDone }: Props) => {
           />
           Нарахувати
         </label>
-        <label className="radio">
+        <label className={styles.radio}>
           <input
             type="radio"
             name="type"
@@ -126,45 +132,42 @@ export const OperationForm = ({ guest, onDone }: Props) => {
         </label>
       </div>
 
-      <div className="form-row">
-        <label>
-          Сума бонусів
-          <input
-            type="text"
-            inputMode="decimal"
-            value={amount}
-            onChange={(event) => {
-              setAmount(event.target.value);
-              clearFeedback();
-            }}
-            placeholder="100"
-            required
-          />
-        </label>
+      <FormRow>
+        <Field
+          label="Сума бонусів"
+          type="text"
+          inputMode="decimal"
+          value={amount}
+          onChange={(event) => {
+            setAmount(event.target.value);
+            clearFeedback();
+          }}
+          placeholder="100"
+          required
+        />
 
-        <label className="grow">
-          Причина
-          <input
-            type="text"
-            value={reason}
-            onChange={(event) => {
-              setReason(event.target.value);
-              clearFeedback();
-            }}
-            placeholder="Вітальний бонус"
-            minLength={3}
-            maxLength={200}
-            required
-          />
-        </label>
-      </div>
+        <Field
+          grow
+          label="Причина"
+          type="text"
+          value={reason}
+          onChange={(event) => {
+            setReason(event.target.value);
+            clearFeedback();
+          }}
+          placeholder="Вітальний бонус"
+          minLength={3}
+          maxLength={200}
+          required
+        />
+      </FormRow>
 
-      {error && <div className="alert alert-error">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
+      {error && <Alert>{error}</Alert>}
+      {success && <Alert variant="success">{success}</Alert>}
 
-      <button type="submit" disabled={isSubmitting}>
+      <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? 'Виконуємо…' : TYPE_LABELS[type]}
-      </button>
-    </form>
+      </Button>
+    </CardForm>
   );
 };

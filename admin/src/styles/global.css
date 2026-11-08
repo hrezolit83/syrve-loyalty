@@ -1,0 +1,64 @@
+/* Єдиний глобальний стиль панелі: токени, скидання й база документа.
+   Усе, що стосується конкретного компонента, лежить у його *.module.css. */
+
+:root {
+  /* ---------- кольори ---------- */
+  --bg: #f4f5f7;
+  --card: #ffffff;
+  --text: #1a1d21;
+  --muted: #6b7280;
+  --border: #e2e5e9;
+  --accent: #1f6feb;
+  --accent-text: #ffffff;
+  --ok-bg: #e7f6ec;
+  --ok-text: #1a7f3c;
+  --fail-bg: #fdeceb;
+  --fail-text: #b42318;
+
+  /* ---------- радіуси ---------- */
+  --radius-sm: 7px;
+  --radius-md: 10px;
+  --radius-pill: 999px;
+
+  /* ---------- відступи ----------
+     Шкала навмисно повторює значення, які були в стилях до переходу на
+     CSS Modules: рефакторинг не мав зсунути жодного пікселя. */
+  --space-1: 0.15rem;
+  --space-2: 0.2rem;
+  --space-3: 0.25rem;
+  --space-4: 0.3rem;
+  --space-5: 0.35rem;
+  --space-6: 0.4rem;
+  --space-7: 0.5rem;
+  --space-8: 0.6rem;
+  --space-9: 0.75rem;
+  --space-10: 0.85rem;
+  --space-11: 1rem;
+  --space-12: 1.25rem;
+  --space-13: 1.5rem;
+  --space-14: 3rem;
+
+  /* Внутрішні відступи елементів керування — щоб поле вводу й кнопка
+     лишалися однакової висоти, коли змінюється одне значення. */
+  --control-pad-y: 0.55rem;
+  --control-pad-x: 0.7rem;
+  --button-pad-x: 1.1rem;
+  --alert-pad-x: 0.8rem;
+
+  /* ---------- розміри ---------- */
+  --content-width: 880px;
+
+  color-scheme: light;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  color: var(--text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+}
