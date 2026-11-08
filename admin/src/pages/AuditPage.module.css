@@ -62,3 +62,19 @@
 .pageCounter {
   composes: muted from '../styles/typography.module.css';
 }
+
+@media (max-width: 639px) {
+  .filters {
+    align-items: stretch;
+  }
+
+  /* Випадні списки на телефоні — на всю ширину: інакше в них не
+     поміщається ні «Усі адміністратори», ні довгі назви дій. */
+  .select {
+    width: 100%;
+  }
+
+  .summary {
+    margin-left: 0;
+  }
+}

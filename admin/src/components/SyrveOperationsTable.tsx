@@ -46,12 +46,13 @@ export const SyrveOperationsTable = ({
         <tbody>
           {operations.map((operation) => (
             <Tr key={operation.id}>
-              <Td nowrap>
+              <Td primary nowrap>
                 {operation.whenCreated
                   ? formatDateTime(operation.whenCreated)
                   : '—'}
               </Td>
               <Td
+                primary
                 right
                 nowrap
                 className={
@@ -60,13 +61,13 @@ export const SyrveOperationsTable = ({
               >
                 {formatSigned(operation.sum)}
               </Td>
-              <Td right nowrap>
+              <Td label="Баланс після" right nowrap>
                 {operation.balanceAfter === null
                   ? '—'
                   : formatAmount(operation.balanceAfter)}
               </Td>
-              <Td>{operation.comment ?? '—'}</Td>
-              <Td muted nowrap>
+              <Td label="Коментар">{operation.comment ?? '—'}</Td>
+              <Td label="Тип у Syrve" muted nowrap>
                 {operation.typeName ?? operation.type ?? '—'}
               </Td>
             </Tr>

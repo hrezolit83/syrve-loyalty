@@ -65,3 +65,25 @@
 .pageCounter {
   composes: muted from '../styles/typography.module.css';
 }
+
+@media (max-width: 639px) {
+  /* Заголовок і експорт — у стовпчик, кнопка на всю ширину: тягтися до
+     неї великим пальцем у кутку екрана незручно. */
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header a {
+    width: 100%;
+  }
+
+  .filters {
+    align-items: stretch;
+  }
+
+  /* Лічильник знайденого — окремим рядком під фільтрами. */
+  .summary {
+    margin-left: 0;
+  }
+}

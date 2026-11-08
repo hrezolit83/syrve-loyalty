@@ -159,17 +159,19 @@ export const AuditPage = () => {
               <tbody>
                 {entries.map((entry) => (
                   <Tr key={entry.id}>
-                    <Td nowrap>{formatDateTime(entry.createdAt)}</Td>
-                    <Td nowrap>
+                    <Td primary nowrap>
+                      {formatDateTime(entry.createdAt)}
+                    </Td>
+                    <Td label="Хто" nowrap>
                       {entry.adminLogin}
                       {entry.ip && (
                         <span className={styles.ip}> · {entry.ip}</span>
                       )}
                     </Td>
-                    <Td nowrap>
+                    <Td primary nowrap>
                       {AUDIT_ACTION_LABELS[entry.action] ?? entry.action}
                     </Td>
-                    <Td className={styles.details}>
+                    <Td label="Деталі" className={styles.details}>
                       {formatAuditDetails(entry.details)}
                     </Td>
                   </Tr>

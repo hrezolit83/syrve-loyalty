@@ -45,8 +45,95 @@
   color: var(--muted);
 }
 
-@media (max-width: 600px) {
-  .table {
-    font-size: 0.8rem;
+/* Підпис поля потрібен лише в картковому вигляді: у таблиці його роль
+   виконує заголовок стовпця. */
+.label {
+  display: none;
+}
+
+/* ---------- вузький екран: рядок стає карткою ----------
+
+   Таблиця з шести стовпців на 375px не поміщається ніяк: або
+   горизонтальний скрол усієї сторінки, або нечитні обрізані колонки.
+   Тому нижче 640px розмітка перебудовується — кожен рядок окремою
+   карткою, а заголовки стовпців переїжджають у підписи полів.
+
+   Робимо це на тій самій розмітці, без другого дерева елементів:
+   два варіанти верстки того самого розходяться при першій же правці. */
+@media (max-width: 639px) {
+  .table,
+  .table tbody,
+  .table tr {
+    display: block;
+    width: 100%;
+  }
+
+  /* Заголовки стовпців сховані: їхній текст тепер у підписах полів. */
+  .table thead {
+    display: none;
+  }
+
+  .table tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-7);
+    padding: var(--space-9) 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table tbody tr:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .table tbody tr:first-child {
+    padding-top: 0;
+  }
+
+  .cell {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-9);
+    /* Кожне поле — свій рядок картки. */
+    flex: 1 1 100%;
+    padding: 0;
+    border-bottom: 0;
+    /* У картці місця мало, тож переноси дозволені попри .nowrap. */
+    white-space: normal;
+    text-align: left;
+  }
+
+  /* Головні поля (дата й сума) — у шапці картки, без підписів і поруч. */
+  .primary {
+    flex: 0 0 auto;
+    order: -1;
+    font-weight: 500;
+  }
+
+  .primary .label {
+    display: none;
+  }
+
+  .label {
+    display: block;
+    flex: 0 0 auto;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .value {
+    text-align: right;
+  }
+
+  .primary .value {
+    text-align: left;
+  }
+
+  /* Довгі значення (коментар) мають переноситися, а не розпирати картку. */
+  .value {
+    min-width: 0;
+    word-break: break-word;
   }
 }

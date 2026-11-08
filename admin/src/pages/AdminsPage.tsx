@@ -240,20 +240,24 @@ export const AdminsPage = () => {
 
                 return (
                   <Tr key={account.id} dimmed={!account.isActive}>
-                    <Td nowrap>
+                    <Td primary>
                       {account.login}
                       {isSelf && <span className={styles.self}> — це ви</span>}
                     </Td>
-                    <Td nowrap>{ROLE_LABELS[account.role]}</Td>
-                    <Td nowrap>
+                    <Td label="Роль" nowrap>
+                      {ROLE_LABELS[account.role]}
+                    </Td>
+                    <Td primary nowrap>
                       {account.isActive ? (
                         <Badge status="ok">активний</Badge>
                       ) : (
                         <Badge status="fail">вимкнено</Badge>
                       )}
                     </Td>
-                    <Td nowrap>{formatDateTime(account.createdAt)}</Td>
-                    <Td>
+                    <Td label="Створено" nowrap>
+                      {formatDateTime(account.createdAt)}
+                    </Td>
+                    <Td label="Дії">
                       <div className={styles.actions}>
                         {/* Власник не може ні зняти з себе роль, ні
                             вимкнути собі доступ — сервер відмовить, тому

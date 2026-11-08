@@ -32,3 +32,24 @@
 .option:disabled {
   cursor: progress;
 }
+
+/* На телефоні чотири періоди в рядок не влазять. Переносити їх усередині
+   рамки негарно — перемикач перестає читатися як один елемент керування,
+   тож він прокручується вбік, а рамка лишається цілою. */
+@media (max-width: 639px) {
+  .group {
+    max-width: 100%;
+    overflow-x: auto;
+    /* Інерційна прокрутка на iOS. */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .group::-webkit-scrollbar {
+    display: none;
+  }
+
+  .option {
+    flex: 0 0 auto;
+  }
+}

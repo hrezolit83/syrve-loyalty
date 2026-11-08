@@ -157,8 +157,10 @@ export const TransactionsPage = () => {
               <tbody>
                 {items.map((item) => (
                   <Tr key={item.id}>
-                    <Td nowrap>{formatDateTime(item.date)}</Td>
-                    <Td>
+                    <Td primary nowrap>
+                      {formatDateTime(item.date)}
+                    </Td>
+                    <Td label="Гість">
                       {item.guest.customerId ? (
                         <Link
                           to={`/guests/${item.guest.customerId}`}
@@ -174,6 +176,7 @@ export const TransactionsPage = () => {
                       </span>
                     </Td>
                     <Td
+                      primary
                       right
                       nowrap
                       className={
@@ -182,15 +185,15 @@ export const TransactionsPage = () => {
                     >
                       {formatSigned(item.sum)}
                     </Td>
-                    <Td right nowrap>
+                    <Td label="Баланс після" right nowrap>
                       {item.balanceAfter === null
                         ? '—'
                         : formatAmount(item.balanceAfter)}
                     </Td>
-                    <Td>{item.comment ?? '—'}</Td>
+                    <Td label="Коментар">{item.comment ?? '—'}</Td>
                     {/* Обидва джерела нейтральні: «панель» — це не «добре»,
                         а просто звідки прийшов запис. Різницю несе підпис. */}
-                    <Td nowrap>
+                    <Td label="Джерело" nowrap>
                       <Badge title={item.typeName ?? item.type ?? undefined}>
                         {SOURCE_LABELS[item.source]}
                       </Badge>

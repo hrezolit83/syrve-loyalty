@@ -169,7 +169,7 @@ export const GuestsPage = () => {
               <tbody>
                 {items.map((guest) => (
                   <Tr key={guest.id}>
-                    <Td>
+                    <Td primary>
                       {guest.customerId ? (
                         <Link
                           to={`/guests/${guest.customerId}`}
@@ -181,10 +181,16 @@ export const GuestsPage = () => {
                         (guest.name ?? 'Без імені')
                       )}
                     </Td>
-                    <Td nowrap>{guest.phoneFormatted}</Td>
-                    <Td nowrap>{guest.cardNumber ?? '—'}</Td>
-                    <Td nowrap>{formatDateTime(guest.createdAt)}</Td>
-                    <Td>
+                    <Td label="Телефон" nowrap>
+                      {guest.phoneFormatted}
+                    </Td>
+                    <Td label="Картка" nowrap>
+                      {guest.cardNumber ?? '—'}
+                    </Td>
+                    <Td label="Реєстрація" nowrap>
+                      {formatDateTime(guest.createdAt)}
+                    </Td>
+                    <Td primary>
                       {guest.botBlocked ? (
                         <Badge status="fail">заблокував бота</Badge>
                       ) : (

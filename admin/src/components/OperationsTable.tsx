@@ -51,15 +51,17 @@ export const OperationsTable = ({
         <tbody>
           {operations.map((operation) => (
             <Tr key={operation.id} dimmed={operation.status === 'failed'}>
-              <Td nowrap>{formatDateTime(operation.createdAt)}</Td>
-              <Td>{TYPE_LABELS[operation.type]}</Td>
-              <Td right nowrap>
+              <Td primary nowrap>
+                {formatDateTime(operation.createdAt)}
+              </Td>
+              <Td label="Тип">{TYPE_LABELS[operation.type]}</Td>
+              <Td primary right nowrap>
                 {operation.type === 'topup' ? '+' : '−'}
                 {formatAmount(operation.amount)}
               </Td>
-              <Td>{operation.reason}</Td>
-              <Td>{operation.adminLogin}</Td>
-              <Td>
+              <Td label="Причина">{operation.reason}</Td>
+              <Td label="Адміністратор">{operation.adminLogin}</Td>
+              <Td label="Результат">
                 {operation.status === 'success' ? (
                   <Badge status="ok">виконано</Badge>
                 ) : (
