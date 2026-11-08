@@ -1,6 +1,8 @@
-import { TRANSACTIONS_PAGE_SIZE } from '../constants/index.js';
-import { isNotifiable } from '../constants/transactionTypes.js';
 import { getSyrveClient } from './syrve/index.js';
+import {
+  fetchTransactionsFrom,
+  keepProgramTransactions,
+} from './transactionFeed.js';
 
 /**
  * Історія операцій гостя (Д1) — читається з Syrve, не з нашої БД.
@@ -21,40 +23,11 @@ export const getGuestSyrveHistory = async (customerId, limit = 10) => {
   const client = getSyrveClient();
   const program = await client.getProgram();
 
-  const collected = [];
-  let cursor = 0;
-
-  for (;;) {
-    const { transactions, lastRevision } =
-      await client.getTransactionsByRevision({
-        customerId,
-        revision: cursor,
-        pageSize: TRANSACTIONS_PAGE_SIZE,
-      });
-
-    if (transactions.length === 0) break;
-
-    collected.push(...transactions);
-
-    const maxRevision = Math.max(
-      lastRevision ?? 0,
-      ...transactions.map((item) => item.revision),
-    );
-
-    if (maxRevision <= cursor) break;
-
-    cursor = maxRevision;
-
-    if (transactions.length < TRANSACTIONS_PAGE_SIZE) break;
-  }
+  const { transactions } = await fetchTransactionsFrom(customerId, 0);
 
   // Ті самі два фільтри, що й у поллера: лише гаманець нашої програми
   // і лише транзакції, які справді змінюють баланс.
-  const relevant = collected.filter((item) => {
-    if (item.walletId && item.walletId !== program.walletId) return false;
-
-    return isNotifiable(item);
-  });
+  const relevant = keepProgramTransactions(transactions, program.walletId);
 
   return relevant
     .sort((a, b) => b.revision - a.revision)

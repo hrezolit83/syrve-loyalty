@@ -1,6 +1,7 @@
 import { REPORT_TIMEZONE } from '../constants/index.js';
 import { prisma } from '../db/prisma.js';
 import {
+  occurredWithin,
   percentChange,
   resolvePeriod,
   zonedDayKey,
@@ -28,7 +29,7 @@ import {
 const sumByDirection = async (direction, range) => {
   const result = await prisma.processedTransaction.aggregate({
     where: {
-      ...range,
+      ...occurredWithin(range.createdAt),
       sum: direction === 'topup' ? { gt: 0 } : { lt: 0 },
     },
     _sum: { sum: true },
@@ -43,10 +44,28 @@ const sumByDirection = async (direction, range) => {
   };
 };
 
+/**
+ * Нові реєстрації за період.
+ *
+ * Рахуємо за `whenRegistered` — датою появи гостя в Syrve, а не за
+ * `createdAt` нашого рядка: гостя могли завести на касі торік, а бота він
+ * підключив учора, і в «нових реєстраціях» це була б неправда. Для рядків,
+ * записаних до появи колонки, лишається запасний варіант — наша дата.
+ */
+const registeredWithin = (range) =>
+  range.createdAt
+    ? {
+        OR: [
+          { whenRegistered: range.createdAt },
+          { whenRegistered: null, createdAt: range.createdAt },
+        ],
+      }
+    : {};
+
 /** Усі показники за один проміжок часу. */
 const collectTotals = async (range) => {
   const [newGuests, topup, chargeoff] = await Promise.all([
-    prisma.guest.count({ where: range }),
+    prisma.guest.count({ where: registeredWithin(range) }),
     sumByDirection('topup', range),
     sumByDirection('chargeoff', range),
   ]);
@@ -67,16 +86,20 @@ const collectTotals = async (range) => {
  * групування вручну з'їдала б пам'ять на великому періоді.
  */
 const collectSeries = async (chartFrom, chartDays) => {
-  // Подвійне AT TIME ZONE не зайве: created_at — timestamp БЕЗ зони, у якому
-  // лежить UTC. Перше перетворення каже PostgreSQL, що це саме UTC, друге
-  // переводить у київський час. З одним перетворенням операція о 01:04 ночі
-  // за Києвом потрапляла б у попередню добу — перевірено на живих даних.
+  // COALESCE, бо групувати треба за часом операції в Syrve, а не за часом
+  // нашого запису: бекфіл історії вставляє торішні транзакції сьогодні.
+  //
+  // Подвійне AT TIME ZONE теж не зайве: колонка — timestamp БЕЗ зони, у
+  // якому лежить UTC. Перше перетворення каже PostgreSQL, що це саме UTC,
+  // друге переводить у київський час. З одним перетворенням операція о
+  // 01:04 ночі за Києвом потрапляла б у попередню добу.
   const rows = await prisma.$queryRaw`
-    SELECT (created_at AT TIME ZONE 'UTC' AT TIME ZONE ${REPORT_TIMEZONE})::date AS day,
+    SELECT (COALESCE(when_created, created_at)
+              AT TIME ZONE 'UTC' AT TIME ZONE ${REPORT_TIMEZONE})::date AS day,
            count(*) FILTER (WHERE sum > 0)::int AS topup,
            count(*) FILTER (WHERE sum < 0)::int AS chargeoff
       FROM processed_transactions
-     WHERE created_at >= ${chartFrom}
+     WHERE COALESCE(when_created, created_at) >= ${chartFrom}
      GROUP BY 1
      ORDER BY 1
   `;

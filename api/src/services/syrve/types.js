@@ -29,6 +29,7 @@
  * @property {SyrveCard[]} cards
  * @property {number} balance        сума балансів гаманців програми
  * @property {string|null} walletId  гаманець програми лояльності
+ * @property {string|null} whenRegistered  коли гість з'явився в Syrve
  *
  * @typedef {object} SyrveTransaction
  * @property {string} id

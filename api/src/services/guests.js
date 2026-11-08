@@ -1,10 +1,8 @@
 import { prisma } from '../db/prisma.js';
-import {
-  CARD_NUMBER_MAX_ATTEMPTS,
-  TRANSACTIONS_PAGE_SIZE,
-} from '../constants/index.js';
+import { CARD_NUMBER_MAX_ATTEMPTS } from '../constants/index.js';
 import { generateCardNumber } from '../utils/cardNumber.js';
 import { logger } from '../utils/logger.js';
+import { backfillGuestHistory } from './backfill.js';
 import {
   getSyrveClient,
   SyrveValidationError,
@@ -28,39 +26,21 @@ export const findGuestByCustomerId = async (syrveCustomerId) =>
   prisma.guest.findUnique({ where: { syrveCustomerId } });
 
 /**
- * Поточна остання ревізія транзакцій гостя.
+ * Коли гість з'явився в Syrve.
  *
- * Потрібна як базова лінія для О6: гість, який щойно зареєструвався, не має
- * отримати пачку сповіщень про операції, що були до нього.
- * Гортаємо до кінця: by_revision віддає сторінками.
+ * Потрібно статистиці: «нові реєстрації» мають рахуватися від появи гостя
+ * в програмі, а не від моменту, коли він відкрив нашого бота — на касі його
+ * могли завести значно раніше.
+ *
+ * Для знайденого гостя дата вже в руках, для щойно створеного доводиться
+ * перечитати картку: create_or_update повертає тільки id.
  */
-export const resolveLastRevision = async (customerId) => {
-  const client = getSyrveClient();
+const resolveWhenRegistered = async (existingCustomer, customerId) => {
+  const raw =
+    existingCustomer?.whenRegistered ??
+    (await getSyrveClient().findCustomerById(customerId))?.whenRegistered;
 
-  let cursor = 0;
-
-  for (;;) {
-    const { transactions, lastRevision } =
-      await client.getTransactionsByRevision({
-        customerId,
-        revision: cursor,
-        pageSize: TRANSACTIONS_PAGE_SIZE,
-      });
-
-    if (transactions.length === 0) return cursor;
-
-    const maxRevision = Math.max(
-      lastRevision ?? 0,
-      ...transactions.map((item) => item.revision),
-    );
-
-    // Захист від нескінченного циклу, якщо Syrve повернув ту саму сторінку.
-    if (maxRevision <= cursor) return cursor;
-
-    cursor = maxRevision;
-
-    if (transactions.length < TRANSACTIONS_PAGE_SIZE) return cursor;
-  }
+  return raw ? new Date(raw) : null;
 };
 
 /** Додає гостя в програму. "Вже в програмі" — це успіх, а не помилка. */
@@ -127,8 +107,16 @@ const ensureCard = async (customerId, existingCards = []) => {
  *  2. створюємо, лише якщо не знайшли;
  *  3. додаємо в програму (повторне додавання — не помилка);
  *  4. видаємо картку, лише якщо карток немає;
- *  5. ставимо базову лінію lastRevision, щоб не сповіщати про старі операції;
- *  6. зберігаємо зв'язок із Telegram.
+ *  5. зберігаємо зв'язок із Telegram;
+ *  6. бекфілимо історію: усі минулі транзакції гаманця нашої програми
+ *     лягають у базу як historical із уже проставленим notifiedAt, а курсор
+ *     стає на останню ревізію.
+ *
+ * Крок 6 раніше був просто «запам'ятати останню ревізію». Сповіщень про
+ * старі операції так теж не було, але разом із ними зникала й історія:
+ * статистика (Д9) і журнал транзакцій не бачили нічого, що сталося до
+ * підключення бота. Тепер історія зберігається, а мовчання забезпечує
+ * notifiedAt, а не пропуск даних.
  *
  * Повторний /start того самого телефону з іншого Telegram-акаунта не створює
  * ні другого гостя в Syrve, ні другого рядка в guests: рядок переприв'язується
@@ -162,11 +150,24 @@ export const registerGuest = async ({ telegramId, chatId, phone, name }) => {
 
   const cardNumber = await ensureCard(customerId, cards);
 
-  const lastRevision = await resolveLastRevision(customerId);
+  const whenRegistered = await resolveWhenRegistered(
+    existingCustomer,
+    customerId,
+  );
+
+  const link = {
+    chatId: BigInt(chatId),
+    name,
+    syrveCustomerId: customerId,
+    cardNumber,
+    whenRegistered,
+  };
 
   // Переприв'язка: якщо цей телефон уже є в нашій базі (інший Telegram),
   // переносимо рядок на новий акаунт — історія операцій гостя зберігається.
   const byPhone = await prisma.guest.findUnique({ where: { phone } });
+
+  let guest;
 
   if (byPhone && byPhone.telegramId !== BigInt(telegramId)) {
     logger.warn(
@@ -174,39 +175,23 @@ export const registerGuest = async ({ telegramId, chatId, phone, name }) => {
       'Телефон уже зареєстрований з іншого Telegram — переприв\'язую',
     );
 
-    return prisma.guest.update({
+    guest = await prisma.guest.update({
       where: { id: byPhone.id },
-      data: {
-        telegramId: BigInt(telegramId),
-        chatId: BigInt(chatId),
-        name,
-        syrveCustomerId: customerId,
-        cardNumber,
-        lastRevision: BigInt(lastRevision),
-      },
+      data: { ...link, telegramId: BigInt(telegramId) },
+    });
+  } else {
+    guest = await prisma.guest.upsert({
+      where: { telegramId: BigInt(telegramId) },
+      update: { ...link, phone },
+      create: { ...link, telegramId: BigInt(telegramId), phone },
     });
   }
 
-  return prisma.guest.upsert({
-    where: { telegramId: BigInt(telegramId) },
-    update: {
-      chatId: BigInt(chatId),
-      phone,
-      name,
-      syrveCustomerId: customerId,
-      cardNumber,
-      lastRevision: BigInt(lastRevision),
-    },
-    create: {
-      telegramId: BigInt(telegramId),
-      chatId: BigInt(chatId),
-      phone,
-      name,
-      syrveCustomerId: customerId,
-      cardNumber,
-      lastRevision: BigInt(lastRevision),
-    },
-  });
+  // Бекфіл після збереження рядка: транзакції посилаються на guest.id.
+  await backfillGuestHistory(guest);
+
+  // Курсор зсунув бекфіл — повертаємо свіжий рядок, а не той, що був до нього.
+  return prisma.guest.findUnique({ where: { id: guest.id } });
 };
 
 /**

@@ -1,11 +1,12 @@
-import {
-  OUTBOX_BATCH_SIZE,
-  TRANSACTIONS_PAGE_SIZE,
-} from '../constants/index.js';
-import { isNotifiable } from '../constants/transactionTypes.js';
+import { OUTBOX_BATCH_SIZE } from '../constants/index.js';
 import { prisma } from '../db/prisma.js';
 import { logger } from '../utils/logger.js';
 import { getSyrveClient } from './syrve/index.js';
+import {
+  fetchTransactionsFrom,
+  keepProgramTransactions,
+  toProcessedRow,
+} from './transactionFeed.js';
 
 /**
  * Синхронізація транзакцій Syrve (О6).
@@ -31,41 +32,6 @@ import { getSyrveClient } from './syrve/index.js';
  *    jobId = transactionId, тому BullMQ відкидає дублі задач.
  */
 
-/** Читає нові транзакції гостя сторінками й повертає їх усі. */
-const fetchNewTransactions = async (customerId, fromRevision) => {
-  const client = getSyrveClient();
-
-  const collected = [];
-  let cursor = Number(fromRevision);
-
-  for (;;) {
-    const { transactions, lastRevision } =
-      await client.getTransactionsByRevision({
-        customerId,
-        revision: cursor,
-        pageSize: TRANSACTIONS_PAGE_SIZE,
-      });
-
-    if (transactions.length === 0) break;
-
-    collected.push(...transactions);
-
-    const maxRevision = Math.max(
-      lastRevision ?? 0,
-      ...transactions.map((item) => item.revision),
-    );
-
-    // Якщо Syrve повернув ту саму сторінку, виходимо: інакше вічний цикл.
-    if (maxRevision <= cursor) break;
-
-    cursor = maxRevision;
-
-    if (transactions.length < TRANSACTIONS_PAGE_SIZE) break;
-  }
-
-  return { transactions: collected, lastRevision: cursor };
-};
-
 /**
  * Один прохід по гостю: прочитати нові транзакції, записати їх і зсунути
  * курсор одним комітом.
@@ -73,7 +39,7 @@ const fetchNewTransactions = async (customerId, fromRevision) => {
  * @returns {Promise<number>} скільки нових транзакцій записано
  */
 export const syncGuestTransactions = async (guest) => {
-  const { transactions, lastRevision } = await fetchNewTransactions(
+  const { transactions, lastRevision } = await fetchTransactionsFrom(
     guest.syrveCustomerId,
     guest.lastRevision,
   );
@@ -82,20 +48,9 @@ export const syncGuestTransactions = async (guest) => {
 
   const program = await getSyrveClient().getProgram();
 
-  // Фільтр перед записом. Два відсіювання, обидва з живих даних:
-  //
-  // 1. Чужий гаманець. Гість може бути в кількох програмах (у тестовій
-  //    організації їх чотири), і by_revision віддає транзакції всіх.
-  //    Нам потрібні лише ті, що стосуються гаманця НАШОЇ програми —
-  //    інакше гість отримав би "баланс" від чужої програми.
-  //
-  // 2. Транзакції, які не змінюють баланс: SetGuestCategory приходить із
-  //    sum = 0 і balanceAfter = null. Писати про неї гостю нема про що.
-  const relevant = transactions.filter((item) => {
-    if (item.walletId && item.walletId !== program.walletId) return false;
-
-    return isNotifiable(item);
-  });
+  // Фільтр перед записом — спільний із бекфілом історії: чужі гаманці й
+  // транзакції, які не змінюють баланс (див. transactionFeed.js).
+  const relevant = keepProgramTransactions(transactions, program.walletId);
 
   // Курсор зсуваємо однаково — і коли все відфільтрували: інакше наступний
   // прохід читав би ті самі непотрібні транзакції вічно.
@@ -103,20 +58,10 @@ export const syncGuestTransactions = async (guest) => {
     const result =
       relevant.length > 0
         ? await tx.processedTransaction.createMany({
-            data: relevant.map((item) => ({
-              transactionId: String(item.id),
-              guestId: guest.id,
-              revision: BigInt(item.revision),
-              type: String(item.type ?? 'unknown'),
-              typeName: item.typeName ?? null,
-              sum: item.sum,
-              balanceAfter: item.balanceAfter,
-              comment: item.comment ?? null,
-              // Час із Syrve, а не наш: поллер бачить транзакцію із
-              // затримкою до POLL_INTERVAL_SEC, і в журналі панелі мав би
-              // стояти момент самої операції.
-              whenCreated: item.whenCreated ? new Date(item.whenCreated) : null,
-            })),
+            // Час береться з Syrve, а не наш: поллер бачить транзакцію із
+            // затримкою до POLL_INTERVAL_SEC, а в журналі панелі має стояти
+            // момент самої операції.
+            data: relevant.map((item) => toProcessedRow(item, guest.id)),
             // Той самий transactionId удруге не вставиться:
             // unique + skipDuplicates.
             skipDuplicates: true,

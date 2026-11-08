@@ -58,6 +58,12 @@ model Guest {
   syrveCustomerId String? @unique @map("syrve_customer_id") @db.Uuid
   cardNumber      String? @map("card_number") @db.VarChar(32)
 
+  // Коли гість з'явився в Syrve. Це НЕ те саме, що createdAt: гостя могли
+  // завести на касі задовго до того, як він відкрив бота. Статистика
+  // «нових реєстрацій» рахує саме цю дату, createdAt лишається датою
+  // підключення до бота.
+  whenRegistered DateTime? @map("when_registered")
+
   // Курсор для customer/transactions/by_revision: метод працює для ОДНОГО
   // гостя, тому revision зберігається окремо для кожного.
   lastRevision BigInt @default(0) @map("last_revision")
@@ -129,6 +135,11 @@ model ProcessedTransaction {
   // у такому разі показуємо createdAt.
   comment       String?   @db.VarChar(255)
   whenCreated   DateTime? @map("when_created")
+  // Транзакція, яку приніс бекфіл історії, а не поллер: вона сталася до
+  // того, як гість підключив бота. Такі рядки потрібні статистиці та
+  // журналу, але сповіщень про них не буває — notifiedAt їм ставиться
+  // одразу при вставці.
+  historical    Boolean   @default(false)
   // Коли сповіщення реально відправлено. NULL = транзакція врахована,
   // але повідомлення ще не доставлено (задача в черзі або впала).
   notifiedAt    DateTime? @map("notified_at")

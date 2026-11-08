@@ -159,3 +159,30 @@ export const percentChange = (current, previous) => {
 
   return Math.round(((current - previous) / previous) * 100);
 };
+
+/**
+ * Умова Prisma «операція сталася в цьому проміжку».
+ *
+ * Фільтрувати треба за часом операції в Syrve (`whenCreated`), а не за
+ * часом нашого запису (`createdAt`): бекфіл історії записує торішні
+ * транзакції сьогодні, і за `createdAt` вони всі злиплися б в один день.
+ * `createdAt` лишається запасним для рядків, яким Syrve часу не дав.
+ */
+export const occurredWithin = (range) =>
+  range
+    ? {
+        OR: [
+          { whenCreated: range },
+          { whenCreated: null, createdAt: range },
+        ],
+      }
+    : {};
+
+/**
+ * Порядок «найновіші зверху» за часом операції. Рядки без часу з Syrve
+ * падають у кінець — їх не має лишитися після бекфілу.
+ */
+export const OCCURRED_DESC = [
+  { whenCreated: { sort: 'desc', nulls: 'last' } },
+  { createdAt: 'desc' },
+];

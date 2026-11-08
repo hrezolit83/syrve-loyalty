@@ -397,6 +397,8 @@ export class RealSyrveClient extends SyrveClient {
       })),
       balance,
       walletId: walletId ?? program.walletId,
+      // Дата появи гостя в Syrve — не плутати з датою підключення бота.
+      whenRegistered: customer.whenRegistered ?? null,
     };
   }
 

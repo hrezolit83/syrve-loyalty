@@ -88,6 +88,7 @@ export class MockSyrveClient extends SyrveClient {
       cards,
       balance: toNumber(row.balance),
       walletId: MOCK_PROGRAM.walletId,
+      whenRegistered: row.createdAt.toISOString(),
     };
   }
 

@@ -1,6 +1,10 @@
 import { prisma } from '../db/prisma.js';
 import { formatPhone } from '../utils/phone.js';
-import { resolvePeriod } from '../utils/period.js';
+import {
+  OCCURRED_DESC,
+  occurredWithin,
+  resolvePeriod,
+} from '../utils/period.js';
 
 /**
  * Журнал транзакцій усіх наших гостей.
@@ -36,9 +40,9 @@ const resolveSource = ({ type, typeName }) => {
 const buildWhere = ({ period, type }) => {
   const { from, to } = resolvePeriod(period);
 
-  const where = {};
-
-  if (from) where.createdAt = { gte: from, lte: to };
+  // Фільтруємо за часом операції в Syrve, а не за часом нашого запису:
+  // інакше вся бекфілена історія потрапляла б у «сьогодні».
+  const where = occurredWithin(from ? { gte: from, lte: to } : null);
 
   // Напрямок — за знаком суми, як і скрізь у сервісі.
   if (type === 'topup') where.sum = { gt: 0 };
@@ -78,7 +82,7 @@ export const getTransactions = async ({ period, type, page, pageSize }) => {
     prisma.processedTransaction.count({ where }),
     prisma.processedTransaction.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: OCCURRED_DESC,
       skip: (page - 1) * pageSize,
       take: pageSize,
       include: { guest: GUEST_SELECT },
@@ -98,7 +102,7 @@ export const getTransactions = async ({ period, type, page, pageSize }) => {
 export const getTransactionsForExport = async ({ period, type, limit }) => {
   const items = await prisma.processedTransaction.findMany({
     where: buildWhere({ period, type }),
-    orderBy: { createdAt: 'desc' },
+    orderBy: OCCURRED_DESC,
     take: limit,
     include: { guest: GUEST_SELECT },
   });
