@@ -1,3 +1,4 @@
+import { LogOut } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
@@ -31,6 +32,7 @@ export const Layout = ({ children }: { children: ReactNode }) => {
           <div className={styles.topbarRight}>
             <span className={styles.login}>{admin?.login}</span>
             <Button type="button" variant="link" onClick={() => logout()}>
+              <LogOut aria-hidden="true" />
               Вийти
             </Button>
           </div>

@@ -1,3 +1,4 @@
+import { Search, Users } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -9,6 +10,7 @@ import { Button } from '../components/ui/Button';
 import { Card, CardForm, CardTitle } from '../components/ui/Card';
 import { Field } from '../components/ui/Field';
 import { FormRow } from '../components/ui/FormRow';
+import { Spinner } from '../components/ui/Spinner';
 import { Table, Td, Th, Tr } from '../components/ui/Table';
 import styles from './GuestsPage.module.css';
 
@@ -104,7 +106,10 @@ export const GuestsPage = () => {
   return (
     <>
       <CardForm onSubmit={handleSearch}>
-        <CardTitle>Гості</CardTitle>
+        <CardTitle>
+          <Users aria-hidden="true" />
+          Гості
+        </CardTitle>
         <p className={styles.total}>
           Усі гості, зареєстровані через Telegram-бот: {total}
         </p>
@@ -120,6 +125,7 @@ export const GuestsPage = () => {
           />
 
           <Button type="submit" disabled={isLoading}>
+            {isLoading ? <Spinner /> : <Search aria-hidden="true" />}
             {isLoading ? 'Шукаємо…' : 'Знайти'}
           </Button>
 

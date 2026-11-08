@@ -1,0 +1,21 @@
+/* Розмір в em: іконка підлаштовується під шрифт того місця, де стоїть. */
+.spinner {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Нерухомий індикатор завантаження нічого не показує, тому не вимикаємо
+   обертання повністю, а сповільнюємо його. */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}

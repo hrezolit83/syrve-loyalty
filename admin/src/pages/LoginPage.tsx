@@ -7,6 +7,7 @@ import { Button } from '../components/ui/Button';
 import { CardForm } from '../components/ui/Card';
 import { CenterScreen } from '../components/ui/CenterScreen';
 import { Field } from '../components/ui/Field';
+import { Spinner } from '../components/ui/Spinner';
 import { useAuth } from '../useAuth';
 import styles from './LoginPage.module.css';
 
@@ -63,6 +64,7 @@ export const LoginPage = () => {
         {error && <Alert>{error}</Alert>}
 
         <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting && <Spinner />}
           {isSubmitting ? 'Входимо…' : 'Увійти'}
         </Button>
       </CardForm>

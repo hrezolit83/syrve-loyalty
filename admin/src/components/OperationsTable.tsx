@@ -1,3 +1,5 @@
+import { History } from 'lucide-react';
+
 import type { Operation } from '../api';
 import { formatAmount, formatDateTime } from '../format';
 import { Badge } from './ui/Badge';
@@ -19,7 +21,10 @@ export const OperationsTable = ({
   if (operations.length === 0) {
     return (
       <Card>
-        <CardTitle>Історія операцій</CardTitle>
+        <CardTitle>
+          <History aria-hidden="true" />
+          Історія операцій
+        </CardTitle>
         <p className={styles.empty}>Операцій ще не було.</p>
       </Card>
     );
@@ -27,7 +32,10 @@ export const OperationsTable = ({
 
   return (
     <Card>
-      <CardTitle>Історія операцій</CardTitle>
+      <CardTitle>
+        <History aria-hidden="true" />
+        Історія операцій
+      </CardTitle>
 
       <Table>
         <thead>

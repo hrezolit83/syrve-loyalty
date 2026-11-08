@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ApiError, api, type Guest } from '../api';
 import { GuestDetails } from '../components/GuestDetails';
 import { Alert } from '../components/ui/Alert';
+import { Spinner } from '../components/ui/Spinner';
 import styles from './GuestPage.module.css';
 
 /**
@@ -45,7 +46,12 @@ export const GuestPage = () => {
         ← До списку гостей
       </Link>
 
-      {isLoading && <p className={styles.loading}>Завантаження…</p>}
+      {isLoading && (
+        <p className={styles.loading}>
+          <Spinner />
+          Завантаження…
+        </p>
+      )}
 
       {error && <Alert>{error}</Alert>}
 

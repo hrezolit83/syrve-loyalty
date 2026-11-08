@@ -1,3 +1,4 @@
 .loading {
   composes: muted from './styles/typography.module.css';
+  gap: var(--space-7);
 }

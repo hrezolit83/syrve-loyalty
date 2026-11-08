@@ -1,3 +1,4 @@
+import { Minus, Plus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 
 import { ApiError, api, type Guest } from '../api';
@@ -7,6 +8,7 @@ import { Button } from './ui/Button';
 import { CardForm, CardTitle } from './ui/Card';
 import { Field } from './ui/Field';
 import { FormRow } from './ui/FormRow';
+import { Spinner } from './ui/Spinner';
 import styles from './OperationForm.module.css';
 
 type Props = {
@@ -116,6 +118,7 @@ export const OperationForm = ({ guest, onDone }: Props) => {
               clearFeedback();
             }}
           />
+          <Plus aria-hidden="true" />
           Нарахувати
         </label>
         <label className={styles.radio}>
@@ -128,6 +131,7 @@ export const OperationForm = ({ guest, onDone }: Props) => {
               clearFeedback();
             }}
           />
+          <Minus aria-hidden="true" />
           Списати
         </label>
       </div>
@@ -166,6 +170,13 @@ export const OperationForm = ({ guest, onDone }: Props) => {
       {success && <Alert variant="success">{success}</Alert>}
 
       <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? (
+          <Spinner />
+        ) : type === 'topup' ? (
+          <Plus aria-hidden="true" />
+        ) : (
+          <Minus aria-hidden="true" />
+        )}
         {isSubmitting ? 'Виконуємо…' : TYPE_LABELS[type]}
       </Button>
     </CardForm>

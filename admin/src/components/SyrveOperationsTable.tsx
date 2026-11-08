@@ -1,3 +1,5 @@
+import { History } from 'lucide-react';
+
 import type { SyrveOperation } from '../api';
 import { formatAmount, formatDateTime, formatSigned } from '../format';
 import { Card, CardTitle } from './ui/Card';
@@ -19,7 +21,10 @@ export const SyrveOperationsTable = ({
   operations: SyrveOperation[];
 }) => (
   <Card>
-    <CardTitle>Операції в Syrve</CardTitle>
+    <CardTitle>
+      <History aria-hidden="true" />
+      Операції в Syrve
+    </CardTitle>
     <p className={styles.hint}>
       Усі зміни балансу за гаманцем програми — зокрема з каси й кабінету
       Syrve Loyalty.

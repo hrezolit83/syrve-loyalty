@@ -1,4 +1,8 @@
 .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
   font: inherit;
   font-weight: 500;
   padding: var(--control-pad-y) var(--button-pad-x);
@@ -7,6 +11,13 @@
   background: var(--accent);
   color: var(--accent-text);
   cursor: pointer;
+}
+
+/* Іконка масштабується від шрифта кнопки й не стискається текстом. */
+.button svg {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
 }
 
 .button:disabled {

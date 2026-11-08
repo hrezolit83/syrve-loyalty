@@ -1,3 +1,4 @@
+import { Search } from 'lucide-react';
 import { useCallback, useState, type FormEvent } from 'react';
 
 import { ApiError, api, type Guest } from '../api';
@@ -7,6 +8,7 @@ import { Button } from '../components/ui/Button';
 import { CardForm, CardTitle } from '../components/ui/Card';
 import { Field } from '../components/ui/Field';
 import { FormRow } from '../components/ui/FormRow';
+import { Spinner } from '../components/ui/Spinner';
 
 /**
  * Пошук гостя за телефоном (О4).
@@ -69,6 +71,7 @@ export const SearchPage = () => {
           />
 
           <Button type="submit" disabled={isSearching}>
+            {isSearching ? <Spinner /> : <Search aria-hidden="true" />}
             {isSearching ? 'Шукаємо…' : 'Знайти'}
           </Button>
         </FormRow>

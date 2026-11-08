@@ -6,6 +6,17 @@
 }
 
 .title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-7);
   font-size: 1.05rem;
   margin: 0 0 var(--space-11);
+}
+
+/* Іконка заголовка — підпис до розділу, тому приглушена. */
+.title svg {
+  width: 1.1em;
+  height: 1.1em;
+  flex-shrink: 0;
+  color: var(--muted);
 }

@@ -9,6 +9,7 @@ import type { ReactNode } from 'react';
 import { AuthProvider } from './auth';
 import { Layout } from './components/Layout';
 import { CenterScreen } from './components/ui/CenterScreen';
+import { Spinner } from './components/ui/Spinner';
 import { GuestPage } from './pages/GuestPage';
 import { GuestsPage } from './pages/GuestsPage';
 import { LoginPage } from './pages/LoginPage';
@@ -27,7 +28,12 @@ const RequireAuth = ({ children }: { children: ReactNode }) => {
   const { admin, isLoading } = useAuth();
 
   if (isLoading)
-    return <CenterScreen className={styles.loading}>Завантаження…</CenterScreen>;
+    return (
+      <CenterScreen className={styles.loading}>
+        <Spinner />
+        Завантаження…
+      </CenterScreen>
+    );
 
   if (!admin) return <Navigate to="/login" replace />;
 

@@ -10,4 +10,7 @@
 
 .loading {
   composes: muted from '../styles/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-7);
 }

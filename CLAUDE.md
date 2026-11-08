@@ -13,7 +13,7 @@
 | БД | PostgreSQL + Prisma |
 | Фонові задачі | Redis + BullMQ |
 | Telegram-бот | grammY |
-| Адмін-панель | React + Vite + TypeScript |
+| Адмін-панель | React + Vite + TypeScript, стилі — CSS Modules, іконки — lucide-react |
 | Запуск | Docker Compose |
 
 ## Структура
