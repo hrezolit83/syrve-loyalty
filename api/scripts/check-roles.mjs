@@ -8,8 +8,15 @@
  *
  *   node scripts/check-roles.mjs [http://localhost:3000]
  *
- * Тестового менеджера скрипт створює сам і деактивує в кінці.
+ * Тестового менеджера скрипт створює сам і повністю прибирає за собою:
+ * разом із ним зникають його операції та записи журналу дій. Інакше в
+ * журналі реального гостя назавжди осідали б рядки «Перевірка ліміту
+ * менеджера» від давно неіснуючих check-manager-*.
+ *
+ * Видалення йде через Prisma напряму, а не через API: методів на
+ * видалення журналу в API немає й не буде — у цьому його сенс.
  */
+import { prisma } from '../src/db/prisma.js';
 import { getEnvVar } from '../src/utils/getEnvVar.js';
 
 const BASE = (process.argv[2] ?? 'http://localhost:3000').replace(/\/$/, '');
@@ -19,10 +26,53 @@ const OWNER_LOGIN = getEnvVar('ADMIN_LOGIN');
 const OWNER_PASSWORD = getEnvVar('ADMIN_PASSWORD');
 const LIMIT = Number(getEnvVar('ADMIN_MANAGER_LIMIT', '500'));
 
-const MANAGER_LOGIN = `check-manager-${Date.now()}`;
+/** Префікс тестових логінів: за ним же й прибираємо. */
+const TEST_LOGIN_PREFIX = 'check-manager-';
+
+const MANAGER_LOGIN = `${TEST_LOGIN_PREFIX}${Date.now()}`;
 const MANAGER_PASSWORD = 'manager-check-123';
 
 let failed = 0;
+
+/**
+ * Прибирає тестових менеджерів і всі їхні сліди.
+ *
+ * Запускається двічі: на старті (раптом попередній запуск упав на
+ * півдорозі) і в кінці. Порядок важливий — Operation.admin оголошено з
+ * onDelete: Restrict, тож спершу сліди, потім самі адміністратори.
+ *
+ * З журналу дій прибираємо три різновиди записів: дії самого тестового
+ * менеджера, невдалі входи під його логіном (там adminId порожній) і дії
+ * власника НАД ним — створення та деактивацію.
+ */
+const cleanupTestAdmins = async () => {
+  const admins = await prisma.admin.findMany({
+    where: { login: { startsWith: TEST_LOGIN_PREFIX } },
+    select: { id: true },
+  });
+
+  if (admins.length === 0) return null;
+
+  const ids = admins.map((item) => item.id);
+
+  const operations = await prisma.operation.deleteMany({
+    where: { adminId: { in: ids } },
+  });
+
+  const audit = await prisma.auditLog.deleteMany({
+    where: {
+      OR: [
+        { adminId: { in: ids } },
+        { adminLogin: { startsWith: TEST_LOGIN_PREFIX } },
+        { targetId: { in: ids } },
+      ],
+    },
+  });
+
+  await prisma.admin.deleteMany({ where: { id: { in: ids } } });
+
+  return { admins: ids.length, operations: operations.count, audit: audit.count };
+};
 
 const ok = (label, condition, extra = '') => {
   console.log(
@@ -65,6 +115,15 @@ const owner = createSession();
 const manager = createSession();
 
 console.log(`API: ${API}\nЛіміт менеджера: ${LIMIT}\n`);
+
+const leftovers = await cleanupTestAdmins();
+
+if (leftovers) {
+  console.log(
+    `  прибрано залишки минулого запуску: адміністраторів ${leftovers.admins}, ` +
+      `операцій ${leftovers.operations}, записів журналу ${leftovers.audit}\n`,
+  );
+}
 
 // ---------- власник ----------
 const ownerLogin = await owner('POST', '/auth/login', {
@@ -265,10 +324,15 @@ ok(
     .status === 404,
 );
 
+// Прибирання — після перевірок журналу: вони якраз і шукають ці записи.
+const removed = await cleanupTestAdmins();
+
 console.log(
-  failed === 0
-    ? `\nУсе зелене. Тестового менеджера ${MANAGER_LOGIN} деактивовано.`
-    : `\nПровалено перевірок: ${failed}`,
+  `\nПрибрано за собою: адміністраторів ${removed?.admins ?? 0}, ` +
+    `операцій ${removed?.operations ?? 0}, записів журналу ${removed?.audit ?? 0}.`,
 );
 
+console.log(failed === 0 ? 'Усе зелене.' : `Провалено перевірок: ${failed}`);
+
+await prisma.$disconnect();
 process.exit(failed > 0 ? 1 : 0);
