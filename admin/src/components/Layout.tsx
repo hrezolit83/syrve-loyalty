@@ -4,6 +4,8 @@ import {
   LogOut,
   Menu,
   ScanLine,
+  ScrollText,
+  ShieldCheck,
   Sparkles,
   Users,
 } from 'lucide-react';
@@ -21,6 +23,8 @@ type NavItem = {
   icon: ComponentType<{ 'aria-hidden'?: boolean }>;
   /** Шлях головної — початок усіх інших, тому порівнюється точно. */
   end?: boolean;
+  /** Пункт лише для власника. Сховати — зручність; забороняє сервер. */
+  ownerOnly?: boolean;
 };
 
 const NAV_ITEMS: NavItem[] = [
@@ -28,6 +32,8 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/guests', label: 'Клієнти', icon: Users },
   { to: '/transactions', label: 'Транзакції', icon: ArrowLeftRight },
   { to: '/search', label: 'Каса', icon: ScanLine },
+  { to: '/admins', label: 'Адміністратори', icon: ShieldCheck, ownerOnly: true },
+  { to: '/audit', label: 'Журнал дій', icon: ScrollText, ownerOnly: true },
 ];
 
 /**
@@ -56,7 +62,9 @@ export const Layout = ({ children }: { children: ReactNode }) => {
         </strong>
 
         <nav className={styles.nav}>
-          {NAV_ITEMS.map((item) => (
+          {NAV_ITEMS.filter(
+            (item) => !item.ownerOnly || admin?.role === 'owner',
+          ).map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -96,7 +104,10 @@ export const Layout = ({ children }: { children: ReactNode }) => {
           </button>
 
           <div className={styles.topbarRight}>
-            <span className={styles.login}>{admin?.login}</span>
+            <span className={styles.login}>
+              {admin?.login}
+              {admin?.role === 'manager' && ' · менеджер'}
+            </span>
             <Button type="button" variant="link" onClick={() => logout()}>
               <LogOut aria-hidden="true" />
               Вийти

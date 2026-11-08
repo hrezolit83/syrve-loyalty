@@ -10,6 +10,8 @@ import { AuthProvider } from './auth';
 import { Layout } from './components/Layout';
 import { CenterScreen } from './components/ui/CenterScreen';
 import { Spinner } from './components/ui/Spinner';
+import { AdminsPage } from './pages/AdminsPage';
+import { AuditPage } from './pages/AuditPage';
 import { GuestPage } from './pages/GuestPage';
 import { HomePage } from './pages/HomePage';
 import { GuestsPage } from './pages/GuestsPage';
@@ -48,6 +50,22 @@ const Protected = ({ children }: { children: ReactNode }) => (
     <Layout>{children}</Layout>
   </RequireAuth>
 );
+
+/**
+ * Розділи власника. Менеджера відправляємо на головну, а не показуємо
+ * помилку: пункту меню він не бачив, отже потрапив сюди за прямим
+ * посиланням — і йому потрібна не нотація, а робоча сторінка.
+ *
+ * Це зручність, а не захист: самі дані закриті на сервері (requireRole),
+ * і без нього менеджер усе одно отримав би 403 на кожен запит.
+ */
+const OwnerOnly = ({ children }: { children: ReactNode }) => {
+  const { admin } = useAuth();
+
+  if (admin && admin.role !== 'owner') return <Navigate to="/" replace />;
+
+  return <>{children}</>;
+};
 
 export const App = () => (
   <AuthProvider>
@@ -96,6 +114,28 @@ export const App = () => (
           element={
             <Protected>
               <GuestPage />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/admins"
+          element={
+            <Protected>
+              <OwnerOnly>
+                <AdminsPage />
+              </OwnerOnly>
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/audit"
+          element={
+            <Protected>
+              <OwnerOnly>
+                <AuditPage />
+              </OwnerOnly>
             </Protected>
           }
         />

@@ -41,8 +41,14 @@ export const writeAuditLog = async ({
   }
 };
 
-/** IP того, хто робить запит. За nginx справжню адресу дає X-Forwarded-For. */
-export const requestIp = (req) => req.ip ?? null;
+/**
+ * IP того, хто робить запит. За nginx справжню адресу дає X-Forwarded-For.
+ *
+ * Node віддає IPv4 у вигляді ::ffff:172.19.0.1 — це та сама адреса в
+ * IPv6-обгортці. У журналі префікс лише заважає читати.
+ */
+export const requestIp = (req) =>
+  req.ip ? req.ip.replace(/^::ffff:/, '') : null;
 
 /** Сторінка журналу з фільтрами: хто, яка дія, за який період. */
 export const getAuditLog = async ({ adminId, action, period, page, pageSize }) => {

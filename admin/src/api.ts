@@ -145,7 +145,58 @@ const transactionsQuery = ({ period, type, page }: TransactionFilters) => {
   return query.toString();
 };
 
-export type Admin = { id: string; login: string };
+export type AdminRole = 'owner' | 'manager';
+
+export type Admin = { id: string; login: string; role: AdminRole };
+
+/** Рядок списку адміністраторів (Д10) — лише для власника. */
+export type AdminAccount = {
+  id: string;
+  login: string;
+  role: AdminRole;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AuditAction =
+  | 'auth.login'
+  | 'auth.login_failed'
+  | 'auth.logout'
+  | 'operation.topup'
+  | 'operation.chargeoff'
+  | 'admin.create'
+  | 'admin.update'
+  | 'admin.deactivate'
+  | 'admin.password_reset'
+  | 'transactions.export';
+
+export type AuditEntry = {
+  id: string;
+  adminId: string | null;
+  adminLogin: string;
+  action: AuditAction;
+  targetType: string | null;
+  targetId: string | null;
+  details: Record<string, unknown> | null;
+  ip: string | null;
+  createdAt: string;
+};
+
+export type AuditList = {
+  entries: AuditEntry[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export type AuditFilters = {
+  adminId: string;
+  action: '' | AuditAction;
+  period: Period;
+  page?: number;
+};
 
 /** Рядок списку гостей (Д2) — із нашої БД, без балансу. */
 export type GuestListItem = {
@@ -224,6 +275,40 @@ export const api = {
    */
   transactionsExportUrl: (filters: TransactionFilters) =>
     `/api/admin/transactions/export?${transactionsQuery({ ...filters, page: undefined })}`,
+
+  /** Д10: адміністратори. Доступно лише власнику — сервер поверне 403. */
+  admins: () => request<{ admins: AdminAccount[] }>('/admin/admins'),
+
+  createAdmin: (body: { login: string; password: string; role: AdminRole }) =>
+    request<{ admin: AdminAccount }>('/admin/admins', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  updateAdmin: (
+    id: string,
+    body: { role?: AdminRole; isActive?: boolean },
+  ) =>
+    request<{ admin: AdminAccount }>(`/admin/admins/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+
+  resetAdminPassword: (id: string, password: string) =>
+    request<{ admin: AdminAccount }>(`/admin/admins/${id}/password`, {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    }),
+
+  audit: ({ adminId, action, period, page }: AuditFilters) => {
+    const query = new URLSearchParams({ period });
+
+    if (adminId) query.set('adminId', adminId);
+    if (action) query.set('action', action);
+    if (page) query.set('page', String(page));
+
+    return request<AuditList>(`/admin/audit?${query.toString()}`);
+  },
 
   login: (login: string, password: string) =>
     request<{ admin: Admin }>('/auth/login', {

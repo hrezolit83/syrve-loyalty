@@ -1,0 +1,48 @@
+.title {
+  font-size: 1.35rem;
+  margin: 0;
+}
+
+.subtitle {
+  composes: muted from '../styles/typography.module.css';
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-7);
+}
+
+/* Дії над рядком — компактні, щоб не перетягувати увагу з самих даних. */
+.rowButton {
+  font: inherit;
+  font-size: 0.82rem;
+  padding: var(--space-3) var(--space-9);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rowButton:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.rowButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Вимкнення доступу — дія з наслідками, тому попереджає кольором. */
+.danger:hover:not(:disabled) {
+  border-color: var(--fail-text);
+  color: var(--fail-text);
+}
+
+.self {
+  composes: muted from '../styles/typography.module.css';
+  font-size: 0.8rem;
+}

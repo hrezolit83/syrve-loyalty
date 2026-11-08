@@ -1,0 +1,64 @@
+.title {
+  font-size: 1.35rem;
+  margin: 0;
+}
+
+.subtitle {
+  composes: muted from '../styles/typography.module.css';
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-11);
+}
+
+.select {
+  font: inherit;
+  font-size: 0.88rem;
+  color: var(--text);
+  padding: var(--control-pad-y) var(--control-pad-x);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+}
+
+.select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.summary {
+  composes: muted from '../styles/typography.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-7);
+  margin-left: auto;
+}
+
+.empty {
+  composes: muted from '../styles/typography.module.css';
+}
+
+/* Деталі бувають довгі — хай переносяться, а не розпирають таблицю. */
+.details {
+  font-size: 0.82rem;
+  word-break: break-word;
+}
+
+.ip {
+  composes: muted from '../styles/typography.module.css';
+  font-size: 0.8rem;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-11);
+}
+
+.pageCounter {
+  composes: muted from '../styles/typography.module.css';
+}
