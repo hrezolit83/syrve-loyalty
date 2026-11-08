@@ -1,7 +1,11 @@
 .radioRow {
   display: flex;
   gap: var(--space-12);
-  margin-bottom: var(--space-11);
+}
+
+/* Картка — flex-колонка, тож без цього кнопка розтяглася б на всю ширину. */
+.submit {
+  align-self: flex-start;
 }
 
 .radio {

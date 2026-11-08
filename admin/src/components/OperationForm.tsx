@@ -172,7 +172,7 @@ export const OperationForm = ({ guest, onDone }: Props) => {
       {error && <Alert>{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
 
-      <Button type="submit" disabled={isSubmitting}>
+      <Button type="submit" className={styles.submit} disabled={isSubmitting}>
         {isSubmitting ? (
           <Spinner />
         ) : type === 'topup' ? (

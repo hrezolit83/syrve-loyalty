@@ -39,8 +39,10 @@ export const LoginPage = () => {
   return (
     <CenterScreen>
       <CardForm className={styles.form} onSubmit={handleSubmit}>
-        <h1 className={styles.title}>Вхід у панель</h1>
-        <p className={styles.subtitle}>Сервіс лояльності</p>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Вхід у панель</h1>
+          <p className={styles.subtitle}>Сервіс лояльності</p>
+        </div>
 
         <Field
           label="Логін"

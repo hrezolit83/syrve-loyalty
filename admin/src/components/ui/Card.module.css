@@ -1,4 +1,10 @@
+/* Проміжки між блоками картки задає сама картка, а не margin на дітях:
+   інакше відступ зникає разом із елементом, який його ніс, — і кнопка
+   форми прилипає до полів, щойно зникне повідомлення над нею. */
 .card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-11);
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -10,7 +16,7 @@
   align-items: center;
   gap: var(--space-7);
   font-size: 1.05rem;
-  margin: 0 0 var(--space-11);
+  margin: 0;
 }
 
 /* Іконка заголовка — підпис до розділу, тому приглушена. */
