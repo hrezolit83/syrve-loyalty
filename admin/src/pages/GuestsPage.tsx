@@ -111,7 +111,7 @@ export const GuestsPage = () => {
           Гості
         </CardTitle>
         <p className={styles.total}>
-          Усі гості, зареєстровані через Telegram-бот: {total}
+          Гості, зареєстровані через Telegram-бот: {total}
         </p>
 
         <FormRow>

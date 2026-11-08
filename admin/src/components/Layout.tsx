@@ -3,7 +3,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  Search,
+  ScanLine,
   Sparkles,
   Users,
 } from 'lucide-react';
@@ -27,7 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Головна', icon: LayoutDashboard, end: true },
   { to: '/guests', label: 'Клієнти', icon: Users },
   { to: '/transactions', label: 'Транзакції', icon: ArrowLeftRight },
-  { to: '/search', label: 'Пошук гостя', icon: Search },
+  { to: '/search', label: 'Каса', icon: ScanLine },
 ];
 
 /**

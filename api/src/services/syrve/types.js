@@ -81,6 +81,11 @@ export class SyrveClient {
     return notImplemented('findCustomerById');
   }
 
+  /** @returns {Promise<SyrveCustomer|null>} */
+  async findCustomerByCard(cardNumber) {
+    return notImplemented('findCustomerByCard');
+  }
+
   /** @returns {Promise<string>} id гостя */
   async createOrUpdateCustomer({ phone, name }) {
     return notImplemented('createOrUpdateCustomer');

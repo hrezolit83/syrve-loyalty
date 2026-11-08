@@ -254,8 +254,9 @@ export const api = {
   guest: (customerId: string) =>
     request<Guest>(`/admin/guests/${customerId}`),
 
-  searchGuest: (phone: string) =>
-    request<Guest>(`/admin/guests/search?phone=${encodeURIComponent(phone)}`),
+  /** Телефон або номер картки — сервер сам розрізняє їх за формою. */
+  searchGuest: (query: string) =>
+    request<Guest>(`/admin/guests/search?query=${encodeURIComponent(query)}`),
 
   operations: (customerId: string) =>
     request<{ operations: Operation[] }>(

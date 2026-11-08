@@ -5,6 +5,8 @@ import styles from './Field.module.css';
 
 type FieldProps = ComponentPropsWithoutRef<'input'> & {
   label: ReactNode;
+  /** Пояснення під полем: що саме сюди можна ввести. */
+  hint?: ReactNode;
   /** Зайняти всю вільну ширину в рядку форми. */
   grow?: boolean;
 };
@@ -17,6 +19,7 @@ type FieldProps = ComponentPropsWithoutRef<'input'> & {
  */
 export const Field = ({
   label,
+  hint,
   grow = false,
   className,
   ...inputProps
@@ -24,5 +27,6 @@ export const Field = ({
   <label className={cx(styles.field, grow && styles.grow, className)}>
     {label}
     <input className={styles.input} {...inputProps} />
+    {hint && <span className={styles.hint}>{hint}</span>}
   </label>
 );

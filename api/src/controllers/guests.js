@@ -12,7 +12,8 @@ import { getGuestSyrveHistory } from '../services/history.js';
 import { getSyrveClient } from '../services/syrve/index.js';
 import { formatAmount } from '../templates/messages.js';
 import { logger } from '../utils/logger.js';
-import { formatPhone, normalizePhone } from '../utils/phone.js';
+import { formatPhone } from '../utils/phone.js';
+import { classifySearchTerm } from '../utils/searchTerm.js';
 
 /**
  * Пошук гостя за телефоном (О4).
@@ -48,25 +49,36 @@ const buildGuestCard = async (customer, fallbackPhone = null) => {
 };
 
 export const searchGuestController = async (req, res) => {
-  const phone = normalizePhone(req.query.phone);
+  // Одне поле на касі приймає і телефон, і номер картки з QR гостя.
+  const term = classifySearchTerm(req.query.query ?? req.query.phone);
 
-  if (!phone) {
+  if (!term) {
     throw createHttpError(
       400,
-      'Вкажіть телефон у форматі +380XXXXXXXXX або 0XXXXXXXXX',
+      'Вкажіть телефон (+380XXXXXXXXX або 0XXXXXXXXX) чи номер картки з 10 цифр',
     );
   }
 
-  const customer = await getSyrveClient().findCustomerByPhone(phone);
+  const client = getSyrveClient();
+
+  const customer =
+    term.kind === 'card'
+      ? await client.findCustomerByCard(term.value)
+      : await client.findCustomerByPhone(term.value);
 
   if (!customer) {
-    throw createHttpError(404, 'Гостя з таким телефоном не знайдено');
+    throw createHttpError(404, 'Гостя не знайдено');
   }
 
   res.json({
     status: 200,
     message: 'ok',
-    data: await buildGuestCard(customer, phone),
+    data: await buildGuestCard(
+      customer,
+      // Телефон із запиту стає запасним лише тоді, коли шукали саме за ним:
+      // у картці Syrve телефон може бути порожній.
+      term.kind === 'phone' ? term.value : null,
+    ),
   });
 };
 

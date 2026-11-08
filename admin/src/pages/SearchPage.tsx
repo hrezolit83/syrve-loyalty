@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react';
+import { ScanLine, Search } from 'lucide-react';
 import { useCallback, useState, type FormEvent } from 'react';
 
 import { ApiError, api, type Guest } from '../api';
@@ -9,23 +9,24 @@ import { CardForm, CardTitle } from '../components/ui/Card';
 import { Field } from '../components/ui/Field';
 import { FormRow } from '../components/ui/FormRow';
 import { Spinner } from '../components/ui/Spinner';
+import styles from './SearchPage.module.css';
 
 /**
- * Пошук гостя за телефоном (О4).
+ * Каса: пошук будь-якого гостя Syrve, нарахування і списання (О4, О5).
  *
- * Шукає в Syrve, тому знаходить і тих гостей, які ніколи не відкривали бота
- * (їх заводили на касі). Список гостей, зареєстрованих через бот, —
- * окрема сторінка (Д2).
+ * Шукає в Syrve, тому знаходить і тих гостей, яких заводили на касі й які
+ * ніколи не відкривали бота. Список гостей, зареєстрованих через бот, —
+ * окремий розділ «Клієнти» (Д2), і він читається з нашої БД.
+ *
+ * Поле одне на телефон і на номер картки: касир сканує QR гостя
+ * USB-сканером, а той вводить номер як клавіатура. Що саме ввели,
+ * визначає сервер за формою рядка.
  */
 export const SearchPage = () => {
-  const [phone, setPhone] = useState('');
+  const [query, setQuery] = useState('');
   const [guest, setGuest] = useState<Guest | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-
-  const loadGuest = useCallback(async (phoneValue: string) => {
-    setGuest(await api.searchGuest(phoneValue));
-  }, []);
 
   const handleSearch = async (event: FormEvent) => {
     event.preventDefault();
@@ -33,7 +34,7 @@ export const SearchPage = () => {
     setIsSearching(true);
 
     try {
-      await loadGuest(phone.trim());
+      setGuest(await api.searchGuest(query.trim()));
     } catch (err) {
       setGuest(null);
       setError(
@@ -44,28 +45,39 @@ export const SearchPage = () => {
     }
   };
 
-  // Після операції баланс змінився — перечитуємо гостя з Syrve.
+  // Після операції баланс змінився — перечитуємо гостя з Syrve за його id,
+  // а не за тим, що ввели в поле: при пошуку за карткою телефону могло й
+  // не бути, та й гість міг знайтися без нього.
   const refresh = useCallback(() => {
     if (!guest) return;
 
-    loadGuest(guest.phone).catch(() => {
-      setError('Не вдалося оновити дані гостя');
-    });
-  }, [guest, loadGuest]);
+    api
+      .guest(guest.customerId)
+      .then(setGuest)
+      .catch(() => setError('Не вдалося оновити дані гостя'));
+  }, [guest]);
 
   return (
     <>
       <CardForm onSubmit={handleSearch}>
-        <CardTitle>Пошук гостя за телефоном</CardTitle>
+        <CardTitle>
+          <ScanLine aria-hidden />
+          Пошук гостя за телефоном або номером картки
+        </CardTitle>
+        <p className={styles.subtitle}>
+          Пошук будь-якого гостя Syrve, нарахування і списання
+        </p>
 
         <FormRow>
           <Field
             grow
-            label="Телефон"
-            type="tel"
-            value={phone}
-            onChange={(event) => setPhone(event.target.value)}
-            placeholder="+380XXXXXXXXX або 0XXXXXXXXX"
+            label="Телефон або номер картки"
+            hint="Можна ввести номер з QR-коду гостя або сканером"
+            type="text"
+            inputMode="numeric"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="+380XXXXXXXXX або 7389451429"
             autoFocus
             required
           />

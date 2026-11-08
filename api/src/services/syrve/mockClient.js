@@ -106,6 +106,14 @@ export class MockSyrveClient extends SyrveClient {
     return row ? this.#toCustomer(row) : null;
   }
 
+  async findCustomerByCard(cardNumber) {
+    const row = await prisma.mockCustomer.findFirst({
+      where: { OR: [{ cardNumber }, { cardTrack: cardNumber }] },
+    });
+
+    return row ? this.#toCustomer(row) : null;
+  }
+
   async createOrUpdateCustomer({ phone, name }) {
     const row = await prisma.mockCustomer.upsert({
       where: { phone },

@@ -1,0 +1,3 @@
+.subtitle {
+  composes: muted from '../styles/typography.module.css';
+}

@@ -410,6 +410,12 @@ export class RealSyrveClient extends SyrveClient {
     return this.#getCustomerInfo({ type: 'id', id: customerId });
   }
 
+  async findCustomerByCard(cardNumber) {
+    // type: 'cardNumber' перевірено на живому API — повертає того самого
+    // гостя, що й пошук за телефоном.
+    return this.#getCustomerInfo({ type: 'cardNumber', cardNumber });
+  }
+
   async createOrUpdateCustomer({ phone, name }) {
     const organizationId = await this.#getOrganizationId();
 
