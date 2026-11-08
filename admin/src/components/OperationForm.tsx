@@ -1,4 +1,4 @@
-import { Minus, Plus } from 'lucide-react';
+import { Coins, Minus, Plus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 
 import { ApiError, api, type Guest } from '../api';
@@ -105,7 +105,10 @@ export const OperationForm = ({ guest, onDone }: Props) => {
 
   return (
     <CardForm onSubmit={handleSubmit}>
-      <CardTitle>Нарахування та списання</CardTitle>
+      <CardTitle>
+        <Coins aria-hidden="true" />
+        Нарахування та списання
+      </CardTitle>
 
       <div className={styles.radioRow}>
         <label className={styles.radio}>

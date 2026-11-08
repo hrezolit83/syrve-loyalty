@@ -1,3 +1,4 @@
+import { User } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import {
@@ -71,7 +72,10 @@ export const GuestDetails = ({
   return (
     <>
       <Card>
-        <CardTitle>{guest.name ?? 'Без імені'}</CardTitle>
+        <CardTitle>
+          <User aria-hidden="true" />
+          {guest.name ?? 'Без імені'}
+        </CardTitle>
 
         <dl className={styles.details}>
           <div>
