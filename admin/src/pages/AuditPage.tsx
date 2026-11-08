@@ -13,6 +13,7 @@ import {
   AUDIT_ACTION_ORDER,
   formatAuditDetails,
 } from '../auditActions';
+import { AdminCell } from '../components/AdminCell';
 import { PeriodSwitch } from '../components/PeriodSwitch';
 import { Alert } from '../components/ui/Alert';
 import { Button } from '../components/ui/Button';
@@ -29,7 +30,9 @@ import styles from './AuditPage.module.css';
  * через API. Фільтри: адміністратор, тип дії, період.
  */
 export const AuditPage = () => {
-  const [period, setPeriod] = useState<Period>('7d');
+  // «Весь час» за замовчуванням: журнал має показувати все, що було,
+  // а не мовчати про події старші за тиждень.
+  const [period, setPeriod] = useState<Period>('all');
   const [adminId, setAdminId] = useState('');
   const [action, setAction] = useState<'' | AuditAction>('');
   const [page, setPage] = useState(1);
@@ -150,8 +153,8 @@ export const AuditPage = () => {
             <Table>
               <thead>
                 <Tr>
-                  <Th>Коли</Th>
-                  <Th>Хто</Th>
+                  <Th>Дата</Th>
+                  <Th>Адміністратор</Th>
                   <Th>Дія</Th>
                   <Th>Деталі</Th>
                 </Tr>
@@ -162,11 +165,12 @@ export const AuditPage = () => {
                     <Td primary nowrap>
                       {formatDateTime(entry.createdAt)}
                     </Td>
-                    <Td label="Хто" nowrap>
-                      {entry.adminLogin}
-                      {entry.ip && (
-                        <span className={styles.ip}> · {entry.ip}</span>
-                      )}
+                    <Td label="Адміністратор">
+                      <AdminCell
+                        login={entry.adminLogin}
+                        role={entry.adminRole}
+                        ip={entry.ip}
+                      />
                     </Td>
                     <Td primary nowrap>
                       {AUDIT_ACTION_LABELS[entry.action] ?? entry.action}

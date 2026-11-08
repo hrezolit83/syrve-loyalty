@@ -1,0 +1,12 @@
+/* Логін і бейдж ролі тримаються разом і переносяться як одне ціле. */
+.admin {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-7);
+}
+
+.ip {
+  composes: muted from '../styles/typography.module.css';
+  font-size: 0.8rem;
+}

@@ -2,6 +2,7 @@ import { History } from 'lucide-react';
 
 import type { Operation } from '../api';
 import { formatAmount, formatDateTime } from '../format';
+import { AdminCell } from './AdminCell';
 import { Badge } from './ui/Badge';
 import { Card, CardTitle } from './ui/Card';
 import { Table, Td, Th, Tr } from './ui/Table';
@@ -40,7 +41,7 @@ export const OperationsTable = ({
       <Table>
         <thead>
           <Tr>
-            <Th>Коли</Th>
+            <Th>Дата</Th>
             <Th>Тип</Th>
             <Th right>Сума</Th>
             <Th>Причина</Th>
@@ -60,7 +61,12 @@ export const OperationsTable = ({
                 {formatAmount(operation.amount)}
               </Td>
               <Td label="Причина">{operation.reason}</Td>
-              <Td label="Адміністратор">{operation.adminLogin}</Td>
+              <Td label="Адміністратор">
+                <AdminCell
+                  login={operation.adminLogin}
+                  role={operation.adminRole}
+                />
+              </Td>
               <Td label="Результат">
                 {operation.status === 'success' ? (
                   <Badge status="ok">виконано</Badge>

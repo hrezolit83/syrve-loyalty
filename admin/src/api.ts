@@ -175,6 +175,8 @@ export type AuditEntry = {
   id: string;
   adminId: string | null;
   adminLogin: string;
+  /** Поточна роль автора запису; null — адміністратора вже немає. */
+  adminRole: AdminRole | null;
   action: AuditAction;
   targetType: string | null;
   targetId: string | null;
@@ -238,6 +240,7 @@ export type Operation = {
   status: 'success' | 'failed';
   error: string | null;
   adminLogin: string;
+  adminRole: AdminRole | null;
   createdAt: string;
 };
 

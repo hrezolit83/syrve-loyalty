@@ -17,6 +17,8 @@ import { Spinner } from '../components/ui/Spinner';
 import { Table, Td, Th, Tr } from '../components/ui/Table';
 import { cx } from '../cx';
 import { formatDateTime } from '../format';
+import { RoleBadge } from '../components/RoleBadge';
+import { ROLE_LABELS } from '../roles';
 import { useAuth } from '../useAuth';
 import styles from './AdminsPage.module.css';
 
@@ -27,11 +29,6 @@ import styles from './AdminsPage.module.css';
  * Тут вони лише показані заздалегідь, щоб власник не тикав у кнопку,
  * яка однаково поверне помилку.
  */
-
-const ROLE_LABELS: Record<AdminRole, string> = {
-  owner: 'Власник',
-  manager: 'Менеджер',
-};
 
 const PASSWORD_HINT_ID = 'new-admin-password-hint';
 
@@ -245,7 +242,7 @@ export const AdminsPage = () => {
                       {isSelf && <span className={styles.self}> — це ви</span>}
                     </Td>
                     <Td label="Роль" nowrap>
-                      {ROLE_LABELS[account.role]}
+                      <RoleBadge role={account.role} />
                     </Td>
                     <Td primary nowrap>
                       {account.isActive ? (

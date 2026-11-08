@@ -36,7 +36,7 @@ export const SyrveOperationsTable = ({
       <Table>
         <thead>
           <Tr>
-            <Th>Коли</Th>
+            <Th>Дата</Th>
             <Th right>Сума</Th>
             <Th right>Баланс після</Th>
             <Th>Коментар</Th>

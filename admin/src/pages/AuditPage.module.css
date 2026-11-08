@@ -47,11 +47,6 @@
   word-break: break-word;
 }
 
-.ip {
-  composes: muted from '../styles/typography.module.css';
-  font-size: 0.8rem;
-}
-
 .pagination {
   display: flex;
   align-items: center;

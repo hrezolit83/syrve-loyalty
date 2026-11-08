@@ -146,7 +146,7 @@ export const TransactionsPage = () => {
             <Table>
               <thead>
                 <Tr>
-                  <Th>Коли</Th>
+                  <Th>Дата</Th>
                   <Th>Гість</Th>
                   <Th right>Сума</Th>
                   <Th right>Баланс після</Th>

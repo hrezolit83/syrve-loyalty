@@ -12,7 +12,10 @@ export const auditQuerySchema = Joi.object({
     .valid(...Object.values(AUDIT_ACTIONS))
     .allow('')
     .default(''),
-  period: Joi.string().valid('today', '7d', '30d', 'all').default('7d'),
+  // За замовчуванням — усе. Журнал відповідає на питання «що взагалі
+  // відбувалося»; відрізок за замовчуванням ховав би події старші за
+  // тиждень, і порожній список виглядав би як «нічого не було».
+  period: Joi.string().valid('today', '7d', '30d', 'all').default('all'),
   page: Joi.number().integer().min(1).default(1),
   pageSize: Joi.number().integer().min(1).max(100).default(AUDIT_PAGE_SIZE),
 });

@@ -67,6 +67,10 @@ export const getAuditLog = async ({ adminId, action, period, page, pageSize }) =
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * pageSize,
       take: pageSize,
+      // Роль беремо з адміністратора, а не з запису: у журналі лежить
+      // факт дії, а роль — поточний стан. Якщо адміністратора вже немає
+      // (або це був невдалий вхід під невідомим логіном), ролі теж немає.
+      include: { admin: { select: { role: true } } },
     }),
   ]);
 
@@ -75,6 +79,7 @@ export const getAuditLog = async ({ adminId, action, period, page, pageSize }) =
       id: entry.id,
       adminId: entry.adminId,
       adminLogin: entry.adminLogin,
+      adminRole: entry.admin?.role ?? null,
       action: entry.action,
       targetType: entry.targetType,
       targetId: entry.targetId,

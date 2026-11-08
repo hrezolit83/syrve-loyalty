@@ -235,7 +235,7 @@ export const getOperationsByCustomerId = async (syrveCustomerId, limit = 50) => 
     where: { syrveCustomerId },
     orderBy: { createdAt: 'desc' },
     take: limit,
-    include: { admin: { select: { login: true } } },
+    include: { admin: { select: { login: true, role: true } } },
   });
 
   return operations.map((operation) => ({
@@ -246,6 +246,7 @@ export const getOperationsByCustomerId = async (syrveCustomerId, limit = 50) => 
     status: operation.status,
     error: operation.error,
     adminLogin: operation.admin.login,
+    adminRole: operation.admin.role,
     createdAt: operation.createdAt,
   }));
 };
