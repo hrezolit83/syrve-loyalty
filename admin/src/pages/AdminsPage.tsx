@@ -33,6 +33,8 @@ const ROLE_LABELS: Record<AdminRole, string> = {
   manager: 'Менеджер',
 };
 
+const PASSWORD_HINT_ID = 'new-admin-password-hint';
+
 export const AdminsPage = () => {
   const { admin: current } = useAuth();
 
@@ -175,7 +177,10 @@ export const AdminsPage = () => {
           Новий менеджер
         </CardTitle>
 
-        <FormRow>
+        <FormRow
+          hintId={PASSWORD_HINT_ID}
+          hint="Пароль — щонайменше 8 символів. Менеджер зможе змінити його лише через вас."
+        >
           <Field
             grow
             label="Логін"
@@ -191,7 +196,7 @@ export const AdminsPage = () => {
           <Field
             grow
             label="Пароль"
-            hint="Щонайменше 8 символів"
+            aria-describedby={PASSWORD_HINT_ID}
             type="text"
             value={password}
             onChange={(event) => setPassword(event.target.value)}

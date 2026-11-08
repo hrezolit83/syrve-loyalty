@@ -1,3 +1,10 @@
+/* Ряд і його підказка — один блок у колонці форми. */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 .row {
   display: flex;
   gap: var(--space-9);
@@ -9,4 +16,10 @@
    у поля зверху ще є підпис, тому вирівнюємо по нижньому краю. */
 .row button {
   align-self: flex-end;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
 }
